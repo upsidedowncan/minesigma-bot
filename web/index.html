@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minesigma BOT</title>
+  <meta name="description" content="Скачать последнюю версию Minesigma BOT." />
+  <style>
+    :root {
+      --bg: #101217;
+      --panel: #1a1e26;
+      --panel2: #242b36;
+      --panel3: #12161d;
+      --line: #3d4859;
+      --line2: #677489;
+      --text: #edf2f8;
+      --muted: #aab5c4;
+      --green: #74dc73;
+      --cyan: #60c9e4;
+      --yellow: #f1c767;
+      --red: #e47676;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .38);
+      --mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--sans);
+      background:
+        linear-gradient(180deg, rgba(96, 201, 228, .10), transparent 34rem),
+        repeating-linear-gradient(45deg, rgba(255,255,255,.026) 0 2px, transparent 2px 7px),
+        radial-gradient(circle at 78% 12%, rgba(116,220,115,.10), transparent 24rem),
+        var(--bg);
+    }
+
+    .wrap { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 44px; }
+    .topbar, .headline, .download-card, .panel, .strip {
+      border: 2px solid var(--line);
+      background: rgba(26, 30, 38, .94);
+      box-shadow: var(--shadow);
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; }
+    .mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--line2);
+      background: linear-gradient(180deg, #313947, #171b22);
+      font-family: var(--mono);
+      color: var(--green);
+      box-shadow: inset 0 1px rgba(255,255,255,.12);
+    }
+    .nav { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .repo-link, .nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .repo-link:hover, .nav a:hover { color: var(--text); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap: 18px;
+      align-items: stretch;
+      padding: 44px 0 18px;
+    }
+    .headline { padding: 34px; position: relative; overflow: hidden; }
+    .headline::after {
+      content: "";
+      position: absolute;
+      inset: auto 26px 22px auto;
+      width: 172px;
+      height: 78px;
+      border: 1px solid rgba(96,201,228,.35);
+      background:
+        linear-gradient(90deg, rgba(96,201,228,.12) 1px, transparent 1px) 0 0 / 16px 16px,
+        linear-gradient(rgba(96,201,228,.12) 1px, transparent 1px) 0 0 / 16px 16px;
+      opacity: .72;
+      pointer-events: none;
+    }
+    .eyebrow { color: var(--cyan); font-family: var(--mono); font-size: 13px; margin-bottom: 12px; }
+    h1 { margin: 0; font-size: clamp(42px, 7vw, 88px); line-height: .92; letter-spacing: 0; }
+    .copy { color: var(--muted); font-size: 18px; max-width: 670px; margin: 22px 0 0; }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+    .badge {
+      border: 1px solid var(--line);
+      background: #11161e;
+      color: var(--muted);
+      padding: 7px 9px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .download-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .version { font-size: 36px; font-weight: 900; margin: 0; }
+    .date { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-top: 4px; }
+    .status {
+      font-family: var(--mono);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      background: var(--panel3);
+      padding: 12px;
+      min-height: 132px;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      border: 2px solid #1c3625;
+      background: linear-gradient(180deg, #8fe891, #56b85d);
+      color: #07150b;
+      text-decoration: none;
+      font-weight: 900;
+      cursor: pointer;
+      overflow: hidden;
+      transform: translateY(0);
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+      box-shadow: 0 5px 0 #1b4825;
+      user-select: none;
+    }
+    .button.secondary {
+      border-color: var(--line);
+      background: linear-gradient(180deg, #323b48, #202632);
+      color: var(--text);
+      box-shadow: 0 5px 0 #11161d;
+    }
+    .button:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .button:active, .button.clicked {
+      transform: translateY(4px) scale(.99);
+      box-shadow: 0 1px 0 #122118;
+      filter: brightness(.95);
+    }
+    .button.disabled { opacity: .55; pointer-events: none; }
+    .ripple {
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      background: rgba(255,255,255,.42);
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple .52s ease-out forwards;
+    }
+    @keyframes ripple {
+      to { transform: translate(-50%, -50%) scale(4.8); opacity: 0; }
+    }
+
+    .strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--line);
+      margin-bottom: 16px;
+    }
+    .metric { background: var(--panel); padding: 16px; }
+    .metric strong { display: block; font-size: 22px; }
+    .metric span { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .wide { grid-column: span 2; }
+    .panel { padding: 18px; min-height: 158px; }
+    .panel h2 { margin: 0 0 10px; font-size: 17px; }
+    .panel p, .panel li { color: var(--muted); }
+    .panel ul { margin: 0; padding-left: 18px; }
+    .command-list {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+    .command-list li {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+    code {
+      display: inline-block;
+      font-family: var(--mono);
+      color: #dce7f3;
+      background: #10151c;
+      border: 1px solid #303a49;
+      padding: 3px 7px;
+      line-height: 1.35;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      vertical-align: middle;
+    }
+    .command-list code {
+      width: 100%;
+      border-color: var(--line);
+      background: linear-gradient(180deg, #141a23, #0f141b);
+      box-shadow: inset 0 1px rgba(255,255,255,.05);
+    }
+    .terminal {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: #0e1117;
+      color: #dce7f3;
+      font-family: var(--mono);
+      overflow-x: auto;
+      line-height: 1.55;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: #11161e;
+      color: var(--muted);
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease, color .12s ease;
+    }
+    .tab:hover {
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+    .tab.active {
+      color: #08120b;
+      border-color: #244d2a;
+      background: linear-gradient(180deg, #8fe891, #56b85d);
+      font-weight: 800;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .steps { counter-reset: step; display: grid; gap: 10px; }
+    .step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+      color: var(--muted);
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line2);
+      color: var(--green);
+      background: #10151c;
+      font-family: var(--mono);
+    }
+    .notice { margin-top: 14px; color: var(--muted); font-size: 13px; font-family: var(--mono); }
+
+    .panel, .download-card, .headline, .topbar, .strip {
+      animation: enter .42s ease both;
+    }
+    .download-card { animation-delay: .05s; }
+    .strip { animation-delay: .09s; }
+    .panel:nth-child(1) { animation-delay: .12s; }
+    .panel:nth-child(2) { animation-delay: .16s; }
+    .panel:nth-child(3) { animation-delay: .20s; }
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 860px) {
+      .hero, .grid, .strip { grid-template-columns: 1fr; }
+      .wide { grid-column: span 1; }
+      .headline { padding: 24px; }
+      .actions { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .nav { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <div class="brand"><span class="mark">MS</span> Minesigma BOT</div>
+      <nav class="nav">
+        <a href="#download">скачать</a>
+        <a href="#features">возможности</a>
+        <a class="repo-link" id="repo-link" href="#" target="_blank" rel="noreferrer">github</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="headline">
+        <div class="eyebrow">Bun + Mineflayer панель управления</div>
+        <h1>Minesigma BOT</h1>
+        <p class="copy">Локальный Minecraft-бот с веб-панелью, настройкой подключения, командами из чата, логами, инвентарём, макросами и ограниченными админ-инструментами для приватных или тестовых миров.</p>
+        <div class="badges">
+          <span class="badge">Bun runtime</span>
+          <span class="badge">Mineflayer</span>
+          <span class="badge">Web UI</span>
+          <span class="badge">GitHub Releases</span>
+        </div>
+      </div>
+
+      <aside class="download-card" id="download">
+        <div>
+          <div class="eyebrow">последняя версия</div>
+          <p class="version" id="version">загрузка...</p>
+          <div class="date" id="release-date">проверяем GitHub Releases</div>
+        </div>
+        <div class="status" id="status">Получаем данные о последнем релизе...</div>
+        <div class="actions">
+          <a class="button disabled" id="download-link" href="#">Скачать</a>
+          <a class="button secondary" id="release" href="#" target="_blank" rel="noreferrer">Что изменилось</a>
+        </div>
+      </aside>
+    </section>
+
+    <section class="strip" aria-label="Краткая сводка">
+      <div class="metric"><strong>1</strong><span>локальная панель управления</span></div>
+      <div class="metric"><strong>25</strong><span>максимум ботов за summon</span></div>
+      <div class="metric"><strong>1s+</strong><span>минимальный интервал спаммера</span></div>
+      <div class="metric"><strong>2</strong><span>радиус clear soft</span></div>
+    </section>
+
+    <section class="grid" id="features">
+      <div class="panel wide">
+        <h2>Что внутри</h2>
+        <p>Minesigma BOT запускается локально и открывает браузерную панель. Через неё можно менять сервер, ник, авторизацию, запускать и останавливать бота, смотреть чат, GUI-окна и инвентарь.</p>
+        <div class="tabs" role="tablist" aria-label="Выбор пакетного менеджера">
+          <button class="tab active" type="button" data-manager="bun">Bun</button>
+          <button class="tab" type="button" data-manager="npm">npm</button>
+          <button class="tab" type="button" data-manager="pnpm">pnpm</button>
+          <button class="tab" type="button" data-manager="yarn">Yarn</button>
+        </div>
+        <div class="tab-panel active" data-panel="bun">
+          <div class="terminal">bun install<br />bun run dev<br /># открыть http://localhost:3000</div>
+        </div>
+        <div class="tab-panel" data-panel="npm">
+          <div class="terminal">npm install<br />npm run dev<br /># открыть http://localhost:3000</div>
+        </div>
+        <div class="tab-panel" data-panel="pnpm">
+          <div class="terminal">pnpm install<br />pnpm run dev<br /># открыть http://localhost:3000</div>
+        </div>
+        <div class="tab-panel" data-panel="yarn">
+          <div class="terminal">yarn install<br />yarn dev<br /># открыть http://localhost:3000</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Скачать и запустить</h2>
+        <div class="steps">
+          <div class="step">Нажми кнопку скачивания и распакуй релиз.</div>
+          <div class="step">Выбери удобный пакетный менеджер во вкладках.</div>
+          <div class="step">Запусти панель и открой <code>http://localhost:3000</code>.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Команды управления</h2>
+        <ul class="command-list">
+          <li><code>bot follow Player</code></li>
+          <li><code>bot guard Player</code></li>
+          <li><code>bot come</code></li>
+          <li><code>bot status</code></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>Чат и макросы</h2>
+        <p>Админы могут управлять ботом прямо из обычного чата или личных сообщений. Старые префиксы <code>*</code> и <code>#</code> тоже поддерживаются.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Инструменты мира</h2>
+        <ul class="command-list">
+          <li><code>bot mine block</code></li>
+          <li><code>bot mine nearby stone 10</code></li>
+          <li><code>bot place 0</code></li>
+          <li><code>bot clear soft 2</code></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const GITHUB_OWNER = "upsidedowncan";
+    const GITHUB_REPO = "minesigma-bot";
+
+    const repoUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}`;
+    const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
+    const statusEl = document.getElementById("status");
+    const versionEl = document.getElementById("version");
+    const dateEl = document.getElementById("release-date");
+    const downloadEl = document.getElementById("download-link");
+    const releaseEl = document.getElementById("release");
+    const repoEl = document.getElementById("repo-link");
+
+    repoEl.href = repoUrl;
+    releaseEl.href = `${repoUrl}/releases/latest`;
+
+    const addClickAnimation = (event) => {
+      const target = event.currentTarget;
+      target.classList.remove("clicked");
+      void target.offsetWidth;
+      target.classList.add("clicked");
+      setTimeout(() => target.classList.remove("clicked"), 180);
+
+      const rect = target.getBoundingClientRect();
+      const ripple = document.createElement("span");
+      const size = Math.max(rect.width, rect.height);
+      ripple.className = "ripple";
+      ripple.style.width = `${size}px`;
+      ripple.style.height = `${size}px`;
+      ripple.style.left = `${event.clientX - rect.left}px`;
+      ripple.style.top = `${event.clientY - rect.top}px`;
+      target.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 560);
+    };
+
+    document.querySelectorAll(".button").forEach((button) => {
+      button.addEventListener("click", addClickAnimation);
+    });
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", (event) => {
+        const manager = event.currentTarget.dataset.manager;
+        document.querySelectorAll(".tab").forEach((item) => {
+          item.classList.toggle("active", item.dataset.manager === manager);
+        });
+        document.querySelectorAll(".tab-panel").forEach((panel) => {
+          panel.classList.toggle("active", panel.dataset.panel === manager);
+        });
+      });
+    });
+
+    const setDownload = (url, label) => {
+      downloadEl.href = url;
+      downloadEl.textContent = label;
+      downloadEl.classList.remove("disabled");
+    };
+
+    const loadRelease = async () => {
+      if (GITHUB_OWNER === "YOUR_GITHUB_USERNAME") {
+        versionEl.textContent = "настрой репо";
+        dateEl.textContent = "отредактируй web/index.html";
+        statusEl.textContent = "Укажи GITHUB_OWNER и GITHUB_REPO в этом файле перед деплоем. После этого страница сама подтянет последний релиз.";
+        return;
+      }
+
+      try {
+        const response = await fetch(apiUrl, { headers: { accept: "application/vnd.github+json" } });
+        if (!response.ok) throw new Error(`GitHub вернул HTTP ${response.status}`);
+        const release = await response.json();
+        const asset = (release.assets || []).find((item) => /(\.zip|\.tar\.gz|\.tgz)$/i.test(item.name)) || release.assets?.[0];
+        const downloadUrl = asset?.browser_download_url || release.zipball_url;
+        versionEl.textContent = release.tag_name || release.name || "latest";
+        dateEl.textContent = release.published_at ? new Date(release.published_at).toLocaleString("ru-RU") : "релиз опубликован";
+        statusEl.textContent = `${release.name || release.tag_name || "Последний релиз"}\n${asset ? `Файл: ${asset.name}` : "Используется исходный ZIP-архив GitHub"}\n${release.body ? release.body.slice(0, 260) : "Релиз готов к скачиванию."}`;
+        releaseEl.href = release.html_url || `${repoUrl}/releases/latest`;
+        setDownload(downloadUrl, asset ? `Скачать ${asset.name}` : "Скачать source zip");
+      } catch (err) {
+        versionEl.textContent = "нет релиза";
+        dateEl.textContent = "последний релиз недоступен";
+        statusEl.textContent = `${err.message}\nСоздай GitHub Release или используй скачивание main-ветки.`;
+        setDownload(`${repoUrl}/archive/refs/heads/main.zip`, "Скачать main.zip");
+      }
+    };
+
+    loadRelease();
+  </script>
+</body>
+</html>
