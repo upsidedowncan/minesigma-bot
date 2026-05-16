@@ -523,12 +523,12 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       const name = el.dataset.tooltip;
       const loreRaw = el.dataset.lore;
       if (!name) { mcTooltip.classList.remove("visible"); return; }
-      let html = "<span class=\"" + getRarityClass(name) + "\">" + safe(stripCodes(name)) + "</span>";
+      let html = "<span class='" + getRarityClass(name) + "'>" + safe(stripCodes(name)) + "</span>";
       if (loreRaw) {
         try {
           const lines = JSON.parse(loreRaw);
           for (const line of lines) {
-            html += "<br><span style=\"color:#aaa\">" + safe(stripCodes(line)) + "</span>";
+            html += "<br><span style='color:#aaa'>" + safe(stripCodes(line)) + "</span>";
           }
         } catch {}
       }
