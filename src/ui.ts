@@ -687,19 +687,25 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const formData = new FormData(form);
-      const payload = {
-        host: String(formData.get("host") || ""),
-        port: Number(formData.get("port") || 25565),
-        username: String(formData.get("username") || ""),
-        password: String(formData.get("password") || "") || undefined,
-        auth: String(formData.get("auth") || "offline"),
-        version: String(formData.get("version") || "") || undefined,
-        admins: String(formData.get("admins") || "")
-      };
-      await send("/api/config", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-      cmdResultEl.textContent = "Настройки сохранены";
-      await refreshStatus();
+      event.stopPropagation();
+      try {
+        const formData = new FormData(form);
+        const payload = {
+          host: String(formData.get("host") || ""),
+          port: Number(formData.get("port") || 25565),
+          username: String(formData.get("username") || ""),
+          password: String(formData.get("password") || "") || undefined,
+          auth: String(formData.get("auth") || "offline"),
+          version: String(formData.get("version") || "") || undefined,
+          admins: String(formData.get("admins") || "")
+        };
+        await send("/api/config", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+        cmdResultEl.textContent = "Настройки сохранены";
+        await refreshStatus();
+      } catch (err) {
+        cmdResultEl.textContent = err.message || "Ошибка сохранения";
+      }
+      return false;
     });
 
     document.getElementById("start-btn").addEventListener("click", async () => { await send("/api/start", { method: "POST" }); await refresh(); });
