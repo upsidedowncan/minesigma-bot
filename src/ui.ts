@@ -237,7 +237,7 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
         <div class="card">
           <div class="card-body">
           <h3 class="card-title">Подключение</h3>
-           <form id="config-form">
+           <form id="config-form" action="javascript:void(0)">
              <div class="row g-2">
               <div class="field col-md-4"><label class="form-label">Сервер</label><input class="form-control" id="host" name="host" value="${esc(config.host)}" required /></div>
               <div class="field col-md-4"><label class="form-label">Порт</label><input class="form-control" id="port" name="port" type="number" min="1" max="65535" value="${config.port}" required /></div>
