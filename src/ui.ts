@@ -237,7 +237,7 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
         <div class="card">
           <div class="card-body">
           <h3 class="card-title">Подключение</h3>
-           <form id="config-form" action="javascript:void(0)">
+           <form id="config-form">
              <div class="row g-2">
               <div class="field col-md-4"><label class="form-label">Сервер</label><input class="form-control" id="host" name="host" value="${esc(config.host)}" required /></div>
               <div class="field col-md-4"><label class="form-label">Порт</label><input class="form-control" id="port" name="port" type="number" min="1" max="65535" value="${config.port}" required /></div>
@@ -248,7 +248,7 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
               <div class="field col-12"><label class="form-label">Админы</label><input class="form-control" id="admins" name="admins" placeholder="Owner1, Owner2" value="${esc((config.admins ?? []).join(", "))}" /></div>
             </div>
             <div class="d-flex flex-wrap gap-2 mt-2">
-              <button class="btn btn-success" type="submit">Сохранить</button>
+               <button class="btn btn-success" type="button" id="save-btn">Сохранить</button>
               <button class="btn btn-primary" type="button" id="start-btn">Запустить бота</button>
               <button class="btn btn-danger" type="button" id="stop-btn">Остановить бота</button>
               <button class="btn btn-warning" type="button" id="restart-btn">Перезапуск</button>
@@ -685,9 +685,7 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       refreshTimer = setInterval(refresh, ms);
     };
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
+    document.getElementById("save-btn").addEventListener("click", async () => {
       try {
         const formData = new FormData(form);
         const payload = {
@@ -705,7 +703,6 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       } catch (err) {
         cmdResultEl.textContent = err.message || "Ошибка сохранения";
       }
-      return false;
     });
 
     document.getElementById("start-btn").addEventListener("click", async () => { await send("/api/start", { method: "POST" }); await refresh(); });
