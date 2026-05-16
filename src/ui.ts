@@ -38,9 +38,9 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       --mono: "IBM Plex Mono","JetBrains Mono","SFMono-Regular",monospace;
       --display: "Space Grotesk","Manrope",sans-serif;
     }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; overflow: hidden; }
     body {
-      min-height:100vh;
+      height:100vh; overflow:hidden;
       color:var(--txt);
       font-family:var(--display);
       background:
@@ -52,37 +52,39 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
         linear-gradient(180deg, var(--bg2), var(--bg));
     }
     * { box-sizing: border-box; }
-    .wrap { width:min(1500px, calc(100% - 32px)); margin:0 auto; padding:28px 0 44px; }
-    .layout { display:grid; grid-template-columns: 1.05fr 1fr; gap:16px; }
-    .left, .right { display:grid; gap:16px; align-content:start; }
+    .wrap { width:min(1200px, calc(100% - 24px)); margin:0 auto; height:100vh; display:flex; flex-direction:column; padding:8px 0; }
+    .layout { display:grid; grid-template-columns: 1fr 1.1fr; gap:8px; flex:1; min-height:0; }
+    .col { display:grid; gap:8px; min-height:0; }
+    .col-right { display:grid; grid-template-rows: 1fr auto auto auto; gap:8px; min-height:0; }
+    .chat-card { display:flex; flex-direction:column; min-height:0; }
+    .chat-card .card-body { flex:1; display:flex; flex-direction:column; min-height:0; padding:8px; }
+    .chat { flex:1; min-height:0; max-height:none; overflow:auto; background:var(--panel3); border:1px solid var(--line); border-radius:0; padding:8px; font-family:var(--mono); font-size:12px; color:var(--txt); }
     .card { border:2px solid var(--line); border-radius:0; box-shadow:var(--shadow); background:rgba(23, 29, 39, .96); }
     .card-body { background:transparent; }
-    .card-title { font-size:1rem; font-family:var(--display); margin-bottom:10px; }
-    .field label { color:var(--cyan); font-size:.8rem; font-weight:700; font-family:var(--mono); text-transform:uppercase; letter-spacing:.06em; }
-    .status { white-space:pre-wrap; max-height:170px; overflow:auto; background:var(--panel3); border:1px solid var(--line); border-radius:0; padding:10px; font-family:var(--mono); font-size:13px; color:var(--txt); }
-    .cmdline { display:grid; grid-template-columns: 1fr auto; gap:8px; margin-top:10px; }
-    .hint { color:var(--muted); margin-top:8px; font-family:var(--mono); }
-    .quick { display:grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap:8px; }
-    .chat { max-height:320px; overflow:auto; background:var(--panel3); border:1px solid var(--line); border-radius:0; padding:10px; font-family:var(--mono); font-size:13px; color:var(--txt); }
-    .chatline { margin-bottom:4px; }
-    .tools { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
-    .slots9 { display:grid; grid-template-columns: repeat(9,minmax(0,1fr)); gap:6px; }
+    .card-title { font-size:.85rem; font-family:var(--display); margin-bottom:6px; }
+    .field label { color:var(--cyan); font-size:.68rem; font-weight:700; font-family:var(--mono); text-transform:uppercase; letter-spacing:.06em; }
+    .status { white-space:pre-wrap; max-height:120px; overflow:auto; background:var(--panel3); border:1px solid var(--line); border-radius:0; padding:6px; font-family:var(--mono); font-size:11px; color:var(--txt); }
+    .cmdline { display:grid; grid-template-columns: 1fr auto; gap:6px; margin-top:6px; }
+    .hint { color:var(--muted); margin-top:4px; font-family:var(--mono); }
+    .chatline { margin-bottom:2px; }
+    .tools { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; align-items:center; }
+    .slots9 { display:grid; grid-template-columns: repeat(9,minmax(0,1fr)); gap:4px; }
     .slot {
       border:1px solid var(--line); background:var(--slot); color:var(--txt);
-      min-height:48px; padding:5px; font-size:11px; text-align:left; font-family:var(--mono); font-weight:500; border-radius:0;
+      min-height:34px; padding:3px; font-size:9px; text-align:left; font-family:var(--mono); font-weight:500; border-radius:0;
     }
-    .inv { max-height:220px; overflow:auto; }
-    .botstats { max-height:180px; overflow:auto; background:var(--panel3); border:1px solid var(--line); border-radius:0; padding:10px; white-space:pre-wrap; font-family:var(--mono); font-size:13px; color:var(--txt); }
+    .inv { max-height:140px; overflow:auto; }
+    .botstats { max-height:100px; overflow:auto; background:var(--panel3); border:1px solid var(--line); border-radius:0; padding:6px; white-space:pre-wrap; font-family:var(--mono); font-size:11px; color:var(--txt); }
     .tab { cursor:pointer; border-radius:0 !important; }
     .hidden { display:none !important; }
-    .card .card-body { padding:20px; }
+    .card .card-body { padding:10px; }
     .card .card-body > .card-title { color:var(--txt); }
     .card .card-body > .h4,
     .card .card-body > h1,
     .card .card-body > h1.h4 { color:var(--txt); }
     .card .text-secondary,
     .card .form-text { color:var(--txt) !important; }
-    .badge { border-radius:0 !important; border:1px solid var(--line) !important; background:linear-gradient(180deg, #111722, #0e131a) !important; color:var(--txt) !important; font-family:var(--mono); font-weight:500; }
+    .badge { border-radius:0 !important; border:1px solid var(--line) !important; background:linear-gradient(180deg, #111722, #0e131a) !important; color:var(--txt) !important; font-family:var(--mono); font-weight:500; font-size:.68rem; padding:.2em .45em; }
     .form-control,
     .form-select {
       border-radius:0 !important;
@@ -91,6 +93,8 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       color:var(--txt);
       box-shadow:none;
       font-family:var(--mono);
+      font-size:.75rem;
+      padding:.25rem .4rem;
     }
     .form-control:focus,
     .form-select:focus {
@@ -106,6 +110,8 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       font-weight:800;
       letter-spacing:0;
       box-shadow:0 6px 0 #11161d;
+      font-size:.72rem;
+      padding:.2rem .5rem;
     }
     .btn:active { transform:translateY(4px) scale(.99); box-shadow:none !important; }
     .btn-success {
@@ -181,38 +187,67 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
     .input-group > .form-control,
     .input-group > .form-select,
     .input-group > .btn { border-radius:0 !important; }
+
+    .gui-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:1000; justify-content:center; align-items:center; }
+    .gui-overlay.open { display:flex; }
+    .gui-dialog { background:#c6c6c6; border:4px solid #000; position:relative; min-width:320px; max-width:95vw; max-height:95vh; overflow:auto; box-shadow:0 0 0 2px #555,0 0 0 4px #373737,inset 0 0 0 2px #fff; }
+    .gui-title { background:#c6c6c6; padding:8px 36px 8px 10px; font-family:var(--mono); font-size:14px; font-weight:700; color:#404040; border-bottom:2px solid #373737; position:relative; }
+    .gui-close { position:absolute; top:4px; right:6px; background:none; border:none; color:#404040; font-size:20px; cursor:pointer; font-weight:700; line-height:1; width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+    .gui-close:hover { color:#ff0000; }
+    .gui-body { padding:10px; position:relative; }
+    .gui-slots { display:grid; gap:2px; justify-content:center; }
+    .mc-slot {
+      width:36px; height:36px; background:#8b8b8b; border:2px solid #000;
+      border-top-color:#373737; border-left-color:#373737; border-bottom-color:#fff; border-right-color:#fff;
+      position:relative; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      image-rendering:pixelated; flex-shrink:0;
+    }
+    .mc-slot:hover { background:#a0a0a0; }
+    .mc-slot:active { background:#6b6b6b; border-top-color:#fff; border-left-color:#fff; border-bottom-color:#373737; border-right-color:#373737; }
+    .mc-slot img { width:28px; height:28px; image-rendering:pixelated; pointer-events:none; }
+    .mc-slot .slot-count { position:absolute; bottom:1px; right:2px; font-size:10px; font-weight:700; color:#fff; text-shadow:2px 2px 0 #3f3f3f,-1px -1px 0 #3f3f3f,1px -1px 0 #3f3f3f,-1px 1px 0 #3f3f3f; font-family:var(--mono); pointer-events:none; }
+    .mc-tooltip { display:none; position:fixed; background:#100010; border:2px solid #2a0a4a; padding:4px 8px; font-family:var(--mono); font-size:12px; color:#fff; z-index:2000; pointer-events:none; white-space:nowrap; max-width:250px; }
+    .mc-tooltip.visible { display:block; }
+    .mc-tooltip .tt-name { color:#fff; }
+    .mc-tooltip .tt-rare { color:#55ffff; }
+    .mc-tooltip .tt-epic { color:#ff55ff; }
+    .mc-tooltip .tt-legend { color:#ffaa00; }
+    .mc-tooltip .tt-uncommon { color:#55ff55; }
+    .mc-tooltip .tt-common { color:#fff; }
+    .gui-player-inv { margin-top:10px; border-top:2px solid #373737; padding-top:8px; }
+    .gui-player-label { font-family:var(--mono); font-size:12px; color:#404040; margin-bottom:4px; }
+    .gui-hotbar { display:grid; grid-template-columns:repeat(9,36px); gap:2px; margin-top:4px; }
     @media (max-width: 1180px) {
       .layout { grid-template-columns:1fr; }
-      .quick { grid-template-columns: repeat(2,minmax(0,1fr)); }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card mb-3">
+    <div class="card mb-2">
       <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div>
-          <h1 class="h4 mb-1 text-white">Minesigma BOT</h1>
+          <h1 class="h5 mb-0 text-white">Minesigma BOT</h1>
         </div>
         <span class="badge rounded-pill text-bg-light border" id="uptime-pill">обновление: 1500 мс</span>
       </div>
     </div>
     <div class="layout">
-      <section class="left">
+      <section class="col">
         <div class="card">
           <div class="card-body">
           <h3 class="card-title">Подключение</h3>
-          <form id="config-form">
-            <div class="row g-3">
-              <div class="field col-md-3"><label class="form-label">Сервер</label><input class="form-control" id="host" name="host" value="${esc(config.host)}" required /></div>
-              <div class="field col-md-3"><label class="form-label">Порт</label><input class="form-control" id="port" name="port" type="number" min="1" max="65535" value="${config.port}" required /></div>
-              <div class="field col-md-3"><label class="form-label">Имя бота</label><input class="form-control" id="username" name="username" value="${esc(config.username)}" required /></div>
-              <div class="field col-md-3"><label class="form-label">Пароль</label><input class="form-control" id="password" name="password" type="password" value="${esc(config.password ?? "")}" /></div>
-              <div class="field col-md-3"><label class="form-label">Авторизация</label><select class="form-select" id="auth" name="auth"><option value="offline" ${selected(config.auth, "offline")}>offline</option><option value="microsoft" ${selected(config.auth, "microsoft")}>microsoft</option><option value="mojang" ${selected(config.auth, "mojang")}>mojang</option></select></div>
-              <div class="field col-md-3"><label class="form-label">Версия</label><input class="form-control" id="version" name="version" placeholder="auto или 1.21.11" value="${esc(config.version ?? "")}" /></div>
-              <div class="field col-md-6"><label class="form-label">Админы</label><input class="form-control" id="admins" name="admins" placeholder="Owner1, Owner2" value="${esc((config.admins ?? []).join(", "))}" /></div>
+           <form id="config-form">
+             <div class="row g-2">
+              <div class="field col-md-4"><label class="form-label">Сервер</label><input class="form-control" id="host" name="host" value="${esc(config.host)}" required /></div>
+              <div class="field col-md-4"><label class="form-label">Порт</label><input class="form-control" id="port" name="port" type="number" min="1" max="65535" value="${config.port}" required /></div>
+              <div class="field col-md-4"><label class="form-label">Имя бота</label><input class="form-control" id="username" name="username" value="${esc(config.username)}" required /></div>
+              <div class="field col-md-4"><label class="form-label">Пароль</label><input class="form-control" id="password" name="password" type="password" value="${esc(config.password ?? "")}" /></div>
+              <div class="field col-md-4"><label class="form-label">Авторизация</label><select class="form-select" id="auth" name="auth"><option value="offline" ${selected(config.auth, "offline")}>offline</option><option value="microsoft" ${selected(config.auth, "microsoft")}>microsoft</option><option value="mojang" ${selected(config.auth, "mojang")}>mojang</option></select></div>
+              <div class="field col-md-4"><label class="form-label">Версия</label><input class="form-control" id="version" name="version" placeholder="auto или 1.21.11" value="${esc(config.version ?? "")}" /></div>
+              <div class="field col-12"><label class="form-label">Админы</label><input class="form-control" id="admins" name="admins" placeholder="Owner1, Owner2" value="${esc((config.admins ?? []).join(", "))}" /></div>
             </div>
-            <div class="d-flex flex-wrap gap-2 mt-3">
+            <div class="d-flex flex-wrap gap-2 mt-2">
               <button class="btn btn-success" type="submit">Сохранить</button>
               <button class="btn btn-primary" type="button" id="start-btn">Запустить бота</button>
               <button class="btn btn-danger" type="button" id="stop-btn">Остановить бота</button>
@@ -234,58 +269,10 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
           <div class="form-text" id="cmd-result">—</div>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-body">
-          <h3 class="card-title">Быстрые действия</h3>
-          <div class="quick">
-            <button class="btn btn-light border" data-cmd="bot add 3">Добавить 3 ботов</button>
-            <button class="btn btn-danger" data-cmd="bot remove all">Очистить ботов</button>
-            <button class="btn btn-light border" data-cmd="bot move forward 2">Шаг вперёд</button>
-            <button class="btn btn-light border" data-cmd="bot jump">Прыжок</button>
-            <button class="btn btn-danger" data-cmd="bot stop">Остановить движение</button>
-            <button class="btn btn-warning" data-cmd="bot attack">Атаковать рядом</button>
-            <button class="btn btn-light border" data-cmd="bot spin">Развернуть</button>
-            <button class="btn btn-light border" data-cmd="bot use 0">Слот 0</button>
-          </div>
-          <div class="input-group mt-3">
-            <input class="form-control" id="target-name" placeholder="Имя игрока" />
-            <button class="btn btn-outline-primary" id="follow-target" type="button">Следовать</button>
-            <button class="btn btn-danger" id="attack-target" type="button">Атака</button>
-            <button class="btn btn-outline-warning" id="spin-target" type="button">Круг</button>
-          </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-body">
-          <h3 class="card-title">Макросы и история</h3>
-          <div class="btn-group mb-3" role="group">
-            <button class="btn btn-dark tab active" type="button" data-tab="macro">Макросы</button>
-            <button class="btn btn-outline-dark tab" type="button" data-tab="history">История</button>
-          </div>
-          <div id="tab-macro">
-            <div class="d-flex flex-wrap gap-2">
-              <button class="btn btn-light border" data-macro="bot chat Hello">Сказать привет</button>
-              <button class="btn btn-light border" data-macro="bot move forward 3; bot jump; bot move forward 2">Рывок</button>
-              <button class="btn btn-light border" data-macro="bot add 5; bot follow Utoplennik228">Добавить и следовать</button>
-              <button class="btn btn-light border" data-macro="bot attack Utoplennik228">Фокус атаки</button>
-            </div>
-            <div class="cmdline">
-              <input class="form-control" id="macro-input" placeholder="команда бота; команда бота; команда бота" />
-              <button id="macro-run" class="btn btn-warning" type="button">Запустить макрос</button>
-            </div>
-          </div>
-          <div id="tab-history" class="hidden">
-            <div id="cmd-history" class="status">Пока нет команд</div>
-            <div class="mt-3"><button class="btn btn-danger" id="history-clear" type="button">Очистить историю</button></div>
-          </div>
-          </div>
-        </div>
       </section>
 
-      <section class="right">
-        <div class="card">
+      <section class="col col-right">
+        <div class="card chat-card">
           <div class="card-body">
           <h3 class="card-title">Чат</h3>
           <div class="tools">
@@ -305,9 +292,27 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
 
         <div class="card">
           <div class="card-body">
-          <h3 class="card-title">Окно</h3>
-          <div id="gui-meta" class="form-text mb-2">Нет открытого окна</div>
-          <div id="gui-grid" class="slots9"></div>
+          <h3 class="card-title">Макросы и история</h3>
+          <div class="btn-group mb-2" role="group">
+            <button class="btn btn-dark tab active" type="button" data-tab="macro">Макросы</button>
+            <button class="btn btn-outline-dark tab" type="button" data-tab="history">История</button>
+          </div>
+          <div id="tab-macro">
+            <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-light border" data-macro="bot chat Hello">Сказать привет</button>
+              <button class="btn btn-light border" data-macro="bot move forward 3; bot jump; bot move forward 2">Рывок</button>
+              <button class="btn btn-light border" data-macro="bot add 5; bot follow Utoplennik228">Добавить и следовать</button>
+              <button class="btn btn-light border" data-macro="bot attack Utoplennik228">Фокус атаки</button>
+            </div>
+            <div class="cmdline">
+              <input class="form-control" id="macro-input" placeholder="команда бота; команда бота; команда бота" />
+              <button id="macro-run" class="btn btn-warning" type="button">Запустить макрос</button>
+            </div>
+          </div>
+          <div id="tab-history" class="hidden">
+            <div id="cmd-history" class="status">Пока нет команд</div>
+            <div class="mt-2"><button class="btn btn-danger" id="history-clear" type="button">Очистить историю</button></div>
+          </div>
           </div>
         </div>
 
@@ -323,6 +328,7 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
               <option value="2500">2500 мс</option>
               <option value="5000">5000 мс</option>
             </select>
+            <button class="btn btn-outline-primary" id="open-gui-btn" type="button">Окно</button>
           </div>
           <div id="bot-stats" class="botstats">Боты не запущены</div>
           <div id="inv-grid" class="slots9 inv"></div>
@@ -332,11 +338,26 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
     </div>
   </div>
 
+  <div class="gui-overlay" id="gui-overlay">
+    <div class="gui-dialog" id="gui-dialog">
+      <button class="gui-close" id="gui-close-btn">&times;</button>
+      <div class="gui-title" id="gui-title">Инвентарь</div>
+      <div class="gui-body">
+        <div id="gui-slots" class="gui-slots"></div>
+        <div class="gui-player-inv" id="gui-player-inv" style="display:none;">
+          <div class="gui-player-label">Инвентарь</div>
+          <div id="gui-player-slots" class="gui-slots" style="grid-template-columns:repeat(9,36px);"></div>
+          <div class="gui-player-label" style="margin-top:6px;">Хотбар</div>
+          <div id="gui-hotbar" class="gui-hotbar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mc-tooltip" id="mc-tooltip"><span class="tt-name" id="tt-text"></span></div>
+
   <script type="module">
     const statusEl = document.getElementById("status");
     const chatEl = document.getElementById("chatlog");
-    const guiMetaEl = document.getElementById("gui-meta");
-    const guiGridEl = document.getElementById("gui-grid");
     const cmdInputEl = document.getElementById("cmd-input");
     const cmdResultEl = document.getElementById("cmd-result");
     const botStatsEl = document.getElementById("bot-stats");
@@ -351,6 +372,17 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
     const refreshRateEl = document.getElementById("refresh-rate");
     const uptimePillEl = document.getElementById("uptime-pill");
     const cmdHistoryEl = document.getElementById("cmd-history");
+    const guiOverlay = document.getElementById("gui-overlay");
+    const guiDialog = document.getElementById("gui-dialog");
+    const guiCloseBtn = document.getElementById("gui-close-btn");
+    const guiTitleEl = document.getElementById("gui-title");
+    const guiSlotsEl = document.getElementById("gui-slots");
+    const guiPlayerInv = document.getElementById("gui-player-inv");
+    const guiPlayerSlotsEl = document.getElementById("gui-player-slots");
+    const guiHotbarEl = document.getElementById("gui-hotbar");
+    const mcTooltip = document.getElementById("mc-tooltip");
+    const ttText = document.getElementById("tt-text");
+    const openGuiBtn = document.getElementById("open-gui-btn");
 
     let refreshTimer = null;
     let latestBots = [];
@@ -436,29 +468,117 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       if (chatAutoscrollEl.checked) chatEl.scrollTop = chatEl.scrollHeight;
     };
 
+    const ITEM_IMG = (name) => name ? "https://mc-heads.net/item/" + encodeURIComponent(name) : "";
+
+    const RARITY_COLORS = {
+      "§0":"#000","§1":"#00a","§2":"#0a0","§3":"#0aa","§4":"#a00","§5":"#a0a",
+      "§6":"#fa0","§7":"#aaa","§8":"#555","§9":"#55f","§a":"#5f5","§b":"#5ff",
+      "§c":"#f55","§d":"#f5f","§e":"#ff5","§f":"#fff",
+    };
+    const stripCodes = (s) => s.replace(/§[0-9a-fk-or]/gi, "");
+    const getRarityClass = (name) => {
+      if (!name) return "tt-common";
+      if (name.includes("§6") || name.includes("§l")) return "tt-legend";
+      if (name.includes("§5")) return "tt-epic";
+      if (name.includes("§b") || name.includes("§3")) return "tt-rare";
+      if (name.includes("§a") || name.includes("§2")) return "tt-uncommon";
+      return "tt-common";
+    };
+
+    const makeSlot = (item, index, onClick) => {
+      const btn = document.createElement("button");
+      btn.className = "mc-slot";
+      btn.type = "button";
+      btn.dataset.index = index;
+      if (item) {
+        const img = document.createElement("img");
+        img.src = ITEM_IMG(item.name);
+        img.alt = item.name;
+        img.onerror = () => { img.style.display = "none"; };
+        btn.appendChild(img);
+        if (item.count > 1) {
+          const cnt = document.createElement("span");
+          cnt.className = "slot-count";
+          cnt.textContent = item.count;
+          btn.appendChild(cnt);
+        }
+        btn.dataset.tooltip = item.name || "";
+        btn.dataset.lore = item.lore ? JSON.stringify(item.lore) : "";
+      }
+      btn.addEventListener("click", async () => {
+        try {
+          const r = await send("/api/gui/click", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ index })
+          });
+          cmdResultEl.textContent = r.message;
+          await refreshGui();
+        } catch (err) { cmdResultEl.textContent = err.message; }
+      });
+      return btn;
+    };
+
+    const showTooltip = (e, el) => {
+      const name = el.dataset.tooltip;
+      const loreRaw = el.dataset.lore;
+      if (!name) { mcTooltip.classList.remove("visible"); return; }
+      let html = "<span class=\"" + getRarityClass(name) + "\">" + safe(stripCodes(name)) + "</span>";
+      if (loreRaw) {
+        try {
+          const lines = JSON.parse(loreRaw);
+          for (const line of lines) {
+            html += "<br><span style=\"color:#aaa\">" + safe(stripCodes(line)) + "</span>";
+          }
+        } catch {}
+      }
+      ttText.innerHTML = html;
+      mcTooltip.classList.add("visible");
+      const rect = el.getBoundingClientRect();
+      let x = rect.right + 8;
+      let y = rect.top;
+      if (x + 200 > window.innerWidth) x = rect.left - 200;
+      if (y + 100 > window.innerHeight) y = window.innerHeight - 100;
+      mcTooltip.style.left = x + "px";
+      mcTooltip.style.top = y + "px";
+    };
+
+    const hideTooltip = () => { mcTooltip.classList.remove("visible"); };
+
+    let currentGui = null;
+
     const renderGui = (gui) => {
-      guiGridEl.innerHTML = "";
-      if (!gui) { guiMetaEl.textContent = "Нет открытого окна"; return; }
-      guiMetaEl.textContent = gui.title + " [" + gui.type + "], slots=" + gui.slotCount;
+      currentGui = gui;
+      guiSlotsEl.innerHTML = "";
+      guiPlayerSlotsEl.innerHTML = "";
+      guiHotbarEl.innerHTML = "";
+      if (!gui) {
+        guiTitleEl.textContent = "Нет открытого окна";
+        guiPlayerInv.style.display = "none";
+        return;
+      }
+      guiTitleEl.textContent = gui.title || "Инвентарь";
       const map = new Map(gui.slots.map((s) => [s.index, s]));
+      const cols = gui.slotCount <= 9 ? 9 : Math.min(9, Math.ceil(gui.slotCount / (gui.rows || 3)) * 3) || 9;
+      guiSlotsEl.style.gridTemplateColumns = "repeat(" + cols + ",36px)";
       for (let i = 0; i < gui.slotCount; i++) {
         const item = map.get(i);
-        const btn = document.createElement("button");
-        btn.className = "slot";
-        btn.type = "button";
-        btn.textContent = item ? "#" + i + " " + item.name + " x" + item.count : "#" + i + " empty";
-        btn.addEventListener("click", async () => {
-          try {
-            const r = await send("/api/gui/click", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ index: i })
-            });
-            cmdResultEl.textContent = r.message;
-            await refreshGui();
-          } catch (err) { cmdResultEl.textContent = err.message; }
-        });
-        guiGridEl.appendChild(btn);
+        guiSlotsEl.appendChild(makeSlot(item, i));
+      }
+      const selectedBot = latestBots[Number(botSelectEl.value || "0")] || latestBots[0];
+      if (selectedBot && selectedBot.inventory) {
+        guiPlayerInv.style.display = "block";
+        const invMap = new Map(selectedBot.inventory.map((s) => [s.index, s]));
+        for (let i = 9; i < 36; i++) {
+          const item = invMap.get(i);
+          guiPlayerSlotsEl.appendChild(makeSlot(item, i));
+        }
+        for (let i = 0; i < 9; i++) {
+          const item = invMap.get(i);
+          guiHotbarEl.appendChild(makeSlot(item, i));
+        }
+      } else {
+        guiPlayerInv.style.display = "none";
       }
     };
 
@@ -466,6 +586,29 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       const data = await send("/api/gui");
       renderGui(data.gui);
     };
+
+    const openGuiDialog = () => {
+      guiOverlay.classList.add("open");
+      refreshGui();
+    };
+    const closeGuiDialog = () => {
+      guiOverlay.classList.remove("open");
+    };
+
+    guiCloseBtn.addEventListener("click", closeGuiDialog);
+    guiOverlay.addEventListener("click", (e) => { if (e.target === guiOverlay) closeGuiDialog(); });
+    openGuiBtn.addEventListener("click", openGuiDialog);
+
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && guiOverlay.classList.contains("open")) closeGuiDialog(); });
+
+    document.addEventListener("mouseover", (e) => {
+      const slot = e.target.closest(".mc-slot");
+      if (slot && slot.dataset.tooltip) showTooltip(e, slot);
+      else hideTooltip();
+    });
+    document.addEventListener("mouseout", (e) => {
+      if (e.target.closest(".mc-slot")) hideTooltip();
+    });
 
     const renderBots = () => {
       const bots = latestBots;
@@ -569,15 +712,6 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
     });
     document.getElementById("cmd-run").addEventListener("click", async () => runCommand(cmdInputEl.value));
     cmdInputEl.addEventListener("keydown", async (e) => { if (e.key === "Enter") { e.preventDefault(); await runCommand(cmdInputEl.value); } });
-
-    document.querySelectorAll("[data-cmd]").forEach((el) => {
-      el.addEventListener("click", async () => runCommand(el.getAttribute("data-cmd")));
-    });
-
-    const targetName = document.getElementById("target-name");
-    document.getElementById("follow-target").addEventListener("click", async () => runCommand("bot follow " + targetName.value));
-    document.getElementById("attack-target").addEventListener("click", async () => runCommand("bot attack " + targetName.value));
-    document.getElementById("spin-target").addEventListener("click", async () => runCommand("bot spin " + targetName.value));
 
     const macroInput = document.getElementById("macro-input");
     document.getElementById("macro-run").addEventListener("click", async () => runMacro(macroInput.value));

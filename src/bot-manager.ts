@@ -103,7 +103,7 @@ export class BotManager {
     return this.bots.map(({ bot }) => {
       const rawItems = bot.inventory?.items?.() ?? [];
       const inv: GuiSlot[] = rawItems
-        .map((item) => ({ index: item.slot, name: item.name, count: item.count }))
+        .map((item) => ({ index: item.slot, name: item.name, count: item.count, lore: (item as any).customLore ?? undefined }))
         .sort((a, b) => a.index - b.index);
       return {
         username: bot.username,
@@ -777,7 +777,7 @@ export class BotManager {
     const slots: GuiSlot[] = [];
     window.slots.forEach((item, index) => {
       if (!item) return;
-      slots.push({ index, name: item.name, count: item.count });
+      slots.push({ index, name: item.name, count: item.count, lore: (item as any).customLore ?? undefined });
     });
     this.guiSnapshot = {
       title: String(window.title ?? "Window"),

@@ -35,6 +35,7 @@ export type GuiSlot = {
   index: number;
   name: string;
   count: number;
+  lore?: string[];
 };
 
 export type GuiSnapshot = {
