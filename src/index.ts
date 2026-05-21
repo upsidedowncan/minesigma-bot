@@ -44,6 +44,17 @@ const parseConfig = async (request: Request): Promise<Partial<BotConfig>> => {
       .map((a) => a.trim())
       .filter(Boolean);
   }
+  if (typeof body.chatProfile === "string" && (body.chatProfile === "fastmc" || body.chatProfile === "vanilla")) {
+    next.chatProfile = body.chatProfile;
+  }
+  if (typeof body.autoEat === "boolean") next.autoEat = body.autoEat;
+  if (typeof body.autoTotem === "boolean") next.autoTotem = body.autoTotem;
+  if (typeof body.autoArmor === "boolean") next.autoArmor = body.autoArmor;
+  if (typeof body.antiAfk === "boolean") next.antiAfk = body.antiAfk;
+  if (typeof body.autoRespawn === "boolean") next.autoRespawn = body.autoRespawn;
+  if (typeof body.critMode === "boolean") next.critMode = body.critMode;
+  if (typeof body.parkour === "boolean") next.parkour = body.parkour;
+  if (typeof body.reach === "number") next.reach = body.reach;
 
   return next;
 };
@@ -60,6 +71,11 @@ Bun.serve({
     "/api/bots": () => json({ ok: true, bots: manager.getBots() }),
     "/api/chat": () => json({ ok: true, log: manager.getChatLog() }),
     "/api/gui": () => json({ ok: true, gui: manager.getGui() }),
+    "/api/homes": () => json({ ok: true, homes: [...manager.getHomes().values()] }),
+    "/api/presets": async () => {
+      const presets = await manager.listPresets();
+      return json({ ok: true, presets });
+    },
     "/api/config": async (request) => {
       if (request.method !== "POST") {
         return json({ ok: false, error: "Method not allowed" }, 405);
@@ -70,6 +86,27 @@ Bun.serve({
         return json({ ok: true, config, state: manager.getState() });
       } catch {
         return json({ ok: false, error: "Invalid JSON body" }, 400);
+      }
+    },
+    "/api/preset": async (request) => {
+      if (request.method !== "POST") {
+        return json({ ok: false, error: "Method not allowed" }, 405);
+      }
+      try {
+        const body = (await request.json()) as { action?: string; name?: string };
+        const action = String(body.action ?? "list");
+        const name = String(body.name ?? "");
+        let result: { ok: boolean; message: string };
+        if (action === "save") result = await manager.savePreset(name);
+        else if (action === "load") result = await manager.loadPreset(name);
+        else if (action === "delete") result = await manager.deletePreset(name);
+        else {
+          const presets = await manager.listPresets();
+          result = { ok: true, message: presets.join(", ") };
+        }
+        return json(result, result.ok ? 200 : 400);
+      } catch {
+        return json({ ok: false, message: "Invalid JSON body" }, 400);
       }
     },
     "/api/start": async (request) => {

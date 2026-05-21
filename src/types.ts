@@ -1,3 +1,5 @@
+export type ChatProfile = "fastmc" | "vanilla";
+
 export type BotConfig = {
   host: string;
   port: number;
@@ -7,6 +9,29 @@ export type BotConfig = {
   auth: "offline" | "microsoft" | "mojang";
   viewDistance: "tiny" | "short" | "normal" | "far";
   admins?: string[];
+  chatProfile?: ChatProfile;
+  autoEat?: boolean;
+  autoTotem?: boolean;
+  autoArmor?: boolean;
+  antiAfk?: boolean;
+  autoRespawn?: boolean;
+  critMode?: boolean;
+  parkour?: boolean;
+  reach?: number;
+};
+
+export type BotPreset = {
+  name: string;
+  config: BotConfig;
+  createdAt: string;
+};
+
+export type HomePosition = {
+  name: string;
+  x: number;
+  y: number;
+  z: number;
+  dimension?: string;
 };
 
 export type BotState = {

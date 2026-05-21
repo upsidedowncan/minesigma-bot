@@ -243,9 +243,10 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
               <div class="field col-md-4"><label class="form-label">Порт</label><input class="form-control" id="port" name="port" type="number" min="1" max="65535" value="${config.port}" required /></div>
               <div class="field col-md-4"><label class="form-label">Имя бота</label><input class="form-control" id="username" name="username" value="${esc(config.username)}" required /></div>
               <div class="field col-md-4"><label class="form-label">Пароль</label><input class="form-control" id="password" name="password" type="password" value="${esc(config.password ?? "")}" /></div>
-              <div class="field col-md-4"><label class="form-label">Авторизация</label><select class="form-select" id="auth" name="auth"><option value="offline" ${selected(config.auth, "offline")}>offline</option><option value="microsoft" ${selected(config.auth, "microsoft")}>microsoft</option><option value="mojang" ${selected(config.auth, "mojang")}>mojang</option></select></div>
-              <div class="field col-md-4"><label class="form-label">Версия</label><input class="form-control" id="version" name="version" placeholder="auto или 1.21.11" value="${esc(config.version ?? "")}" /></div>
-              <div class="field col-12"><label class="form-label">Админы</label><input class="form-control" id="admins" name="admins" placeholder="Owner1, Owner2" value="${esc((config.admins ?? []).join(", "))}" /></div>
+               <div class="field col-md-4"><label class="form-label">Авторизация</label><select class="form-select" id="auth" name="auth"><option value="offline" ${selected(config.auth, "offline")}>offline</option><option value="microsoft" ${selected(config.auth, "microsoft")}>microsoft</option><option value="mojang" ${selected(config.auth, "mojang")}>mojang</option></select></div>
+               <div class="field col-md-4"><label class="form-label">Версия</label><input class="form-control" id="version" name="version" placeholder="auto или 1.21.11" value="${esc(config.version ?? "")}" /></div>
+               <div class="field col-md-4"><label class="form-label">Профиль чата</label><select class="form-select" id="chatProfile"><option value="fastmc" ${selected(config.chatProfile ?? "fastmc", "fastmc")}>FastMC</option><option value="vanilla" ${selected(config.chatProfile ?? "fastmc", "vanilla")}>Vanilla</option></select></div>
+               <div class="field col-12"><label class="form-label">Админы</label><input class="form-control" id="admins" name="admins" placeholder="Owner1, Owner2" value="${esc((config.admins ?? []).join(", "))}" /></div>
             </div>
             <div class="d-flex flex-wrap gap-2 mt-2">
                <button class="btn btn-success" type="button" id="save-btn">Сохранить</button>
@@ -255,6 +256,59 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
               <button class="btn btn-outline-warning" type="button" id="ping-btn">Проверить сервер</button>
             </div>
           </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+          <h3 class="card-title">Авто-системы</h3>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-dark" id="auto-eat">Авто-еда: выкл</button>
+            <button class="btn btn-outline-dark" id="auto-totem">Авто-тотем: выкл</button>
+            <button class="btn btn-outline-dark" id="auto-armor">Авто-броня: выкл</button>
+            <button class="btn btn-outline-dark" id="anti-afk">Анти-AFK: выкл</button>
+            <button class="btn btn-outline-dark" id="auto-respawn">Авто-респаун: выкл</button>
+            <button class="btn btn-outline-dark" id="crit-mode">Крит: выкл</button>
+            <button class="btn btn-outline-dark" id="parkour-mode">Паркур: выкл</button>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+            <label class="form-label mb-0">Дальность атаки:</label>
+            <input class="form-control" id="reach-input" type="number" min="3" max="6" value="3" style="width:60px" />
+            <button class="btn btn-outline-primary" id="reach-set">OK</button>
+          </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+          <h3 class="card-title">Сборки (Пресеты)</h3>
+          <div class="d-flex flex-wrap gap-2">
+            <input class="form-control" id="preset-name" placeholder="Название сборки" style="max-width:180px" />
+            <button class="btn btn-success" id="preset-save">Сохранить</button>
+            <button class="btn btn-primary" id="preset-load">Загрузить</button>
+            <button class="btn btn-danger" id="preset-delete">Удалить</button>
+            <button class="btn btn-outline-warning" id="preset-list">Список</button>
+          </div>
+          <div class="form-text mt-2" id="preset-result">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+          <h3 class="card-title">Дома и телепортация</h3>
+          <div class="d-flex flex-wrap gap-2">
+            <input class="form-control" id="home-name" placeholder="Название дома" style="max-width:160px" />
+            <button class="btn btn-success" id="home-set">Сохранить</button>
+            <button class="btn btn-primary" id="home-go">Телепорт</button>
+            <button class="btn btn-danger" id="home-del">Удалить</button>
+            <button class="btn btn-outline-warning" id="home-list">Список</button>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <button class="btn btn-outline-dark" data-cmd="bot rescue">Респаун</button>
+            <button class="btn btn-outline-dark" data-cmd="bot health">Здоровье</button>
+            <button class="btn btn-outline-dark" data-cmd="bot compass">Компас</button>
+          </div>
+          <div class="form-text mt-2" id="home-result">—</div>
           </div>
         </div>
 
@@ -303,6 +357,13 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
               <button class="btn btn-light border" data-macro="bot move forward 3; bot jump; bot move forward 2">Рывок</button>
               <button class="btn btn-light border" data-macro="bot add 5; bot follow Utoplennik228">Добавить и следовать</button>
               <button class="btn btn-light border" data-macro="bot attack Utoplennik228">Фокус атаки</button>
+              <button class="btn btn-light border" data-macro="bot bridge 10">Мост 10</button>
+              <button class="btn btn-light border" data-macro="bot pillar 5">Столб 5</button>
+              <button class="btn btn-light border" data-macro="bot tower 10">Башня 10</button>
+              <button class="btn btn-light border" data-macro="bot fill 3 1">Заполнить 3</button>
+              <button class="btn btn-light border" data-macro="bot wall front 3 3">Стена 3x3</button>
+              <button class="btn btn-light border" data-macro="bot crit on; bot attack">Крит атака</button>
+              <button class="btn btn-light border" data-macro="bot autoeat on; bot autototem on; bot autoarmor on">Авто-всё</button>
             </div>
             <div class="cmdline">
               <input class="form-control" id="macro-input" placeholder="команда бота; команда бота; команда бота" />
@@ -685,25 +746,104 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       refreshTimer = setInterval(refresh, ms);
     };
 
-    document.getElementById("save-btn").addEventListener("click", async () => {
-      try {
-        const formData = new FormData(form);
-        const payload = {
-          host: String(formData.get("host") || ""),
-          port: Number(formData.get("port") || 25565),
-          username: String(formData.get("username") || ""),
-          password: String(formData.get("password") || "") || undefined,
-          auth: String(formData.get("auth") || "offline"),
-          version: String(formData.get("version") || "") || undefined,
-          admins: String(formData.get("admins") || "")
-        };
-        await send("/api/config", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-        cmdResultEl.textContent = "Настройки сохранены";
-        await refreshStatus();
-      } catch (err) {
-        cmdResultEl.textContent = err.message || "Ошибка сохранения";
-      }
-    });
+     document.getElementById("save-btn").addEventListener("click", async () => {
+       try {
+         const formData = new FormData(form);
+         const payload = {
+           host: String(formData.get("host") || ""),
+           port: Number(formData.get("port") || 25565),
+           username: String(formData.get("username") || ""),
+           password: String(formData.get("password") || "") || undefined,
+           auth: String(formData.get("auth") || "offline"),
+           version: String(formData.get("version") || "") || undefined,
+           chatProfile: String(document.getElementById("chatProfile")?.value || "fastmc"),
+           admins: String(formData.get("admins") || "")
+         };
+         await send("/api/config", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+         cmdResultEl.textContent = "Настройки сохранены";
+         await refreshStatus();
+       } catch (err) {
+         cmdResultEl.textContent = err.message || "Ошибка сохранения";
+       }
+     });
+
+     const toggleAuto = async (btnId, command) => {
+       const btn = document.getElementById(btnId);
+       const isOn = btn.textContent.includes("вкл") && !btn.textContent.includes("выкл");
+       const newState = !isOn;
+       try {
+         await send("/api/command", {
+           method: "POST",
+           headers: { "content-type": "application/json" },
+            body: JSON.stringify({ command: command + " " + (newState ? "on" : "off") })
+         });
+         btn.textContent = btn.textContent.replace(/(вкл|выкл)$/, newState ? "вкл" : "выкл");
+         btn.classList.toggle("btn-success", newState);
+         btn.classList.toggle("btn-outline-dark", !newState);
+       } catch (err) { cmdResultEl.textContent = err.message; }
+     };
+
+     document.getElementById("auto-eat").addEventListener("click", () => toggleAuto("auto-eat", "bot autoeat"));
+     document.getElementById("auto-totem").addEventListener("click", () => toggleAuto("auto-totem", "bot autototem"));
+     document.getElementById("auto-armor").addEventListener("click", () => toggleAuto("auto-armor", "bot autoarmor"));
+     document.getElementById("anti-afk").addEventListener("click", () => toggleAuto("anti-afk", "bot antiafk"));
+     document.getElementById("auto-respawn").addEventListener("click", () => toggleAuto("auto-respawn", "bot autorespawn"));
+     document.getElementById("crit-mode").addEventListener("click", () => toggleAuto("crit-mode", "bot crit"));
+     document.getElementById("parkour-mode").addEventListener("click", () => toggleAuto("parkour-mode", "bot parkour"));
+
+     document.getElementById("reach-set").addEventListener("click", async () => {
+       const val = document.getElementById("reach-input").value;
+       try {
+         const res = await send("/api/command", {
+           method: "POST",
+           headers: { "content-type": "application/json" },
+            body: JSON.stringify({ command: "bot reach " + val })
+         });
+         cmdResultEl.textContent = res.message;
+       } catch (err) { cmdResultEl.textContent = err.message; }
+     });
+
+     const presetResult = document.getElementById("preset-result");
+     const presetAction = async (action) => {
+       const name = document.getElementById("preset-name").value.trim();
+       if (action !== "list" && !name) { presetResult.textContent = "Введите название сборки"; return; }
+       try {
+         const res = await send("/api/preset", {
+           method: "POST",
+           headers: { "content-type": "application/json" },
+           body: JSON.stringify({ action, name })
+         });
+         presetResult.textContent = res.message;
+         if (action === "load") await refreshStatus();
+       } catch (err) { presetResult.textContent = err.message; }
+     };
+
+     document.getElementById("preset-save").addEventListener("click", () => presetAction("save"));
+     document.getElementById("preset-load").addEventListener("click", () => presetAction("load"));
+     document.getElementById("preset-delete").addEventListener("click", () => presetAction("delete"));
+     document.getElementById("preset-list").addEventListener("click", () => presetAction("list"));
+
+     const homeResult = document.getElementById("home-result");
+     const homeAction = async (action) => {
+       const name = document.getElementById("home-name").value.trim();
+       if (action !== "listhomes" && !name) { homeResult.textContent = "Введите название дома"; return; }
+        const cmd = action === "sethome" ? "bot sethome " + name :
+                    action === "home" ? "bot home " + name :
+                    action === "delhome" ? "bot delhome " + name : "bot listhomes";
+       try {
+         const res = await send("/api/command", {
+           method: "POST",
+           headers: { "content-type": "application/json" },
+           body: JSON.stringify({ command: cmd })
+         });
+         homeResult.textContent = res.message;
+       } catch (err) { homeResult.textContent = err.message; }
+     };
+
+     document.getElementById("home-set").addEventListener("click", () => homeAction("sethome"));
+     document.getElementById("home-go").addEventListener("click", () => homeAction("home"));
+     document.getElementById("home-del").addEventListener("click", () => homeAction("delhome"));
+     document.getElementById("home-list").addEventListener("click", () => homeAction("listhomes"));
 
     document.getElementById("start-btn").addEventListener("click", async () => { await send("/api/start", { method: "POST" }); await refresh(); });
     document.getElementById("stop-btn").addEventListener("click", async () => { await send("/api/stop", { method: "POST" }); await refresh(); });
@@ -718,9 +858,13 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
 
     const macroInput = document.getElementById("macro-input");
     document.getElementById("macro-run").addEventListener("click", async () => runMacro(macroInput.value));
-    document.querySelectorAll("[data-macro]").forEach((el) => {
-      el.addEventListener("click", async () => runMacro(el.getAttribute("data-macro")));
-    });
+     document.querySelectorAll("[data-macro]").forEach((el) => {
+       el.addEventListener("click", async () => runMacro(el.getAttribute("data-macro")));
+     });
+
+     document.querySelectorAll("[data-cmd]").forEach((el) => {
+       el.addEventListener("click", async () => runCommand(el.getAttribute("data-cmd")));
+     });
 
     document.querySelectorAll(".tab").forEach((el) => {
       el.addEventListener("click", () => {

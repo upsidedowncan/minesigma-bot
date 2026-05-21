@@ -1,6 +1,6 @@
 import mineflayer from "mineflayer";
 import { Vec3 } from "vec3";
-import type { BotConfig, BotState, BotSummary, ChatLogEntry, GuiSnapshot, GuiSlot } from "./types.ts";
+import type { BotConfig, BotState, BotSummary, ChatLogEntry, GuiSnapshot, GuiSlot, HomePosition } from "./types.ts";
 
 const DEFAULT_CONFIG: BotConfig = {
   host: "localhost",
@@ -8,7 +8,16 @@ const DEFAULT_CONFIG: BotConfig = {
   username: "MinesigmaBOT",
   auth: "offline",
   viewDistance: "normal",
-  admins: []
+  admins: [],
+  chatProfile: "fastmc",
+  autoEat: false,
+  autoTotem: false,
+  autoArmor: false,
+  antiAfk: false,
+  autoRespawn: false,
+  critMode: false,
+  parkour: false,
+  reach: 3
 };
 
 const MAX_CHAT_LOG = 300;
@@ -76,9 +85,20 @@ export class BotManager {
     intervalMs: 3000,
     remaining: null
   };
+  private homes: Map<string, HomePosition> = new Map();
+  private deathPositions: Map<string, { x: number; y: number; z: number }> = new Map();
+  private presetsDir: string = ".minesigma-presets";
 
   getConfig(): BotConfig {
     return cloneConfig(this.config);
+  }
+
+  getHomes(): Map<string, HomePosition> {
+    return new Map(this.homes);
+  }
+
+  getDeathPositions(): Map<string, { x: number; y: number; z: number }> {
+    return new Map(this.deathPositions);
   }
 
   updateConfig(next: Partial<BotConfig>): BotConfig {
@@ -320,6 +340,164 @@ export class BotManager {
     if (cmd === "clear") {
       return this.executeClearCommand(args);
     }
+    if (cmd === "drop") {
+      return this.executeDropCommand(args);
+    }
+    if (cmd === "give") {
+      return this.executeGiveCommand(args);
+    }
+    if (cmd === "tpa") {
+      const target = rest.trim();
+      if (!target) return { ok: false, message: "Usage: tpa <player>" };
+      this.forEachBot((bot) => bot.chat(`/tpa ${target}`));
+      return { ok: true, message: `TPA sent to ${target} from ${this.bots.length} bot(s)` };
+    }
+    if (cmd === "tpahere") {
+      const target = rest.trim();
+      if (!target) return { ok: false, message: "Usage: tpahere <player>" };
+      this.forEachBot((bot) => bot.chat(`/tpahere ${target}`));
+      return { ok: true, message: `TPAHere sent to ${target} from ${this.bots.length} bot(s)` };
+    }
+    if (cmd === "home") {
+      const name = rest.trim();
+      if (!name) return { ok: false, message: "Usage: home <name>" };
+      const home = this.homes.get(name);
+      if (!home) return { ok: false, message: `Home '${name}' not found` };
+      this.forEachBot((bot) => bot.chat(`/tpa ${home.x} ${home.y} ${home.z}`));
+      return { ok: true, message: `Teleporting to home '${name}' at ${home.x}, ${home.y}, ${home.z}` };
+    }
+    if (cmd === "sethome") {
+      const name = rest.trim();
+      if (!name) return { ok: false, message: "Usage: sethome <name>" };
+      const primary = this.primaryBot();
+      if (!primary || !primary.entity) return { ok: false, message: "No bot position available" };
+      const pos = primary.entity.position;
+      this.homes.set(name, {
+        name,
+        x: Number(pos.x.toFixed(1)),
+        y: Number(pos.y.toFixed(1)),
+        z: Number(pos.z.toFixed(1)),
+        dimension: (primary.entity as any).dimension
+      });
+      return { ok: true, message: `Home '${name}' saved at ${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}` };
+    }
+    if (cmd === "delhome") {
+      const name = rest.trim();
+      if (!name) return { ok: false, message: "Usage: delhome <name>" };
+      if (!this.homes.delete(name)) return { ok: false, message: `Home '${name}' not found` };
+      return { ok: true, message: `Home '${name}' deleted` };
+    }
+    if (cmd === "listhomes") {
+      if (this.homes.size === 0) return { ok: true, message: "No homes saved" };
+      const list = [...this.homes.values()].map((h) => `${h.name}: ${h.x}, ${h.y}, ${h.z}`).join("; ");
+      return { ok: true, message: `Homes: ${list}` };
+    }
+    if (cmd === "bridge") {
+      const length = Number(args[0] ?? "5");
+      if (!Number.isInteger(length) || length < 1 || length > 20) return { ok: false, message: "Usage: bridge <1..20>" };
+      return this.executeBridgeCommand(length);
+    }
+    if (cmd === "pillar") {
+      const height = Number(args[0] ?? "5");
+      if (!Number.isInteger(height) || height < 1 || height > 20) return { ok: false, message: "Usage: pillar <1..20>" };
+      return this.executePillarCommand(height);
+    }
+    if (cmd === "autoeat" || cmd === "autototem" || cmd === "autoarmor" || cmd === "antiafk" || cmd === "autorespawn" || cmd === "crit" || cmd === "parkour") {
+      const enabled = this.parseToggle(args[0]);
+      if (enabled === null) return { ok: false, message: `Usage: bot ${cmd} on|off` };
+      const keyMap: Record<string, keyof BotConfig> = {
+        autoeat: "autoEat",
+        autototem: "autoTotem",
+        autoarmor: "autoArmor",
+        antiafk: "antiAfk",
+        autorespawn: "autoRespawn",
+        crit: "critMode",
+        parkour: "parkour"
+      };
+      const configKey = keyMap[cmd];
+      if (configKey) {
+        (this.config as any)[configKey] = enabled;
+      }
+      if (cmd === "antiafk" && enabled) {
+        this.startAntiAfk();
+      } else if (cmd === "antiafk" && !enabled) {
+        this.stopAntiAfk();
+      }
+      if (cmd === "crit" && enabled) {
+        (this.config as any).reach = (this.config.reach ?? 3);
+      }
+      return { ok: true, message: `${cmd} ${enabled ? "enabled" : "disabled"}` };
+    }
+    if (cmd === "reach") {
+      const dist = Number(args[0]);
+      if (!Number.isFinite(dist) || dist < 3 || dist > 6) return { ok: false, message: "Usage: bot reach <3..6>" };
+      this.config.reach = dist;
+      return { ok: true, message: `Attack reach set to ${dist} blocks` };
+    }
+    if (cmd === "preset") {
+      return this.executePresetCommand(args);
+    }
+    if (cmd === "rescue") {
+      const pos = this.deathPositions.get(this.primaryBot()?.username ?? "_default") ?? null;
+      if (!pos) return { ok: false, message: "No death position recorded" };
+      const primary = this.primaryBot();
+      if (!primary || !primary.entity) return { ok: false, message: "No bot position" };
+      const cur = primary.entity.position;
+      const dx = Math.abs(cur.x - pos.x);
+      const dy = Math.abs(cur.y - pos.y);
+      const dz = Math.abs(cur.z - pos.z);
+      if (dx > 3 || dy > 3 || dz > 3) {
+        this.forEachBot((bot) => bot.chat(`/tp ${pos.x} ${pos.y} ${pos.z}`));
+      } else {
+        this.clearBehavior(this.bots[0]);
+        const runtime = this.bots[0];
+        this.driveToward(runtime, pos, 4);
+      }
+      return { ok: true, message: `Moving to rescue point at ${pos.x}, ${pos.y}, ${pos.z}` };
+    }
+    if (cmd === "compass") {
+      const target = rest.trim();
+      if (!target) return { ok: false, message: "Usage: compass <x z> or compass <player>" };
+      const coords = target.split(/\s+/);
+      let tx: number, tz: number;
+      if (coords.length === 2) {
+        tx = Number(coords[0]);
+        tz = Number(coords[1]);
+        if (!Number.isFinite(tx) || !Number.isFinite(tz)) return { ok: false, message: "Invalid coordinates" };
+      } else {
+        const entity = this.findPlayerEntity(this.primaryBot()!, target);
+        if (!entity) return { ok: false, message: `Player '${target}' not found` };
+        tx = entity.position.x;
+        tz = entity.position.z;
+      }
+      this.forEachBot((bot) => {
+        if (!bot.entity) return;
+        const yaw = Math.atan2(-(tz - bot.entity.position.z), -(tx - bot.entity.position.x));
+        bot.look(yaw, bot.entity.pitch, true);
+      });
+      return { ok: true, message: `Looking toward ${tx}, ${tz}` };
+    }
+    if (cmd === "wall") {
+      return this.executeWallCommand(args);
+    }
+    if (cmd === "fill") {
+      return this.executeFillCommand(args);
+    }
+    if (cmd === "tower") {
+      return this.executeTowerCommand(args);
+    }
+    if (cmd === "health") {
+      const primary = this.primaryBot();
+      if (!primary) return { ok: false, message: "No bot" };
+      return {
+        ok: true,
+        message: `HP: ${primary.health}/20, Food: ${primary.food}/20, Air: ${(primary as any).oxygenLevel ?? 0}/300`
+      };
+    }
+    if (text.startsWith("/")) {
+      this.forEachBot((bot) => bot.chat(text.startsWith("/") ? text : `/${text}`));
+      return { ok: true, message: `Command sent from ${this.bots.length} bot(s)` };
+    }
 
     this.forEachBot((bot) => bot.chat(text.startsWith("/") ? text : `/${text}`));
     return { ok: true, message: `Command sent from ${this.bots.length} bot(s)` };
@@ -387,7 +565,17 @@ export class BotManager {
     const botText = bots.length
       ? bots.map((bot) => `${bot.username} hp=${bot.health} food=${bot.food}`).join("; ")
       : "none";
-    return `status=${state.status}, connected=${state.connected}, bots=${bots.length}, ${botText}`;
+    const profile = this.config.chatProfile ?? "fastmc";
+    const autos = [
+      this.config.autoEat ? "eat" : null,
+      this.config.autoTotem ? "totem" : null,
+      this.config.autoArmor ? "armor" : null,
+      this.config.antiAfk ? "afk" : null,
+      this.config.critMode ? "crit" : null
+    ].filter(Boolean).join(",");
+    const autoStr = autos ? ` | auto[${autos}]` : "";
+    const reach = this.config.reach ?? 3;
+    return `profile=${profile} | status=${state.status} | connected=${state.connected} | bots=${bots.length} | reach=${reach}${autoStr} | ${botText}`;
   }
 
   private clearBehavior(runtime: BotRuntime): void {
@@ -494,6 +682,246 @@ export class BotManager {
   private stopSpammer(): void {
     if (this.spammer.timer) clearInterval(this.spammer.timer);
     this.spammer.timer = null;
+  }
+
+  private antiAfkInterval: ReturnType<typeof setInterval> | null = null;
+
+  private startAntiAfk(): void {
+    if (this.antiAfkInterval) return;
+    this.antiAfkInterval = setInterval(() => {
+      this.forEachBot((bot) => {
+        if (bot.entity) {
+          bot.look(bot.entity.yaw + 0.1, bot.entity.pitch, true);
+        }
+      });
+    }, 5000);
+  }
+
+  private stopAntiAfk(): void {
+    if (this.antiAfkInterval) {
+      clearInterval(this.antiAfkInterval);
+      this.antiAfkInterval = null;
+    }
+  }
+
+  private async executeDropCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
+    const bot = this.primaryBot();
+    if (!bot) return { ok: false, message: "No bot" };
+    const target = args[0] ?? "all";
+    if (target === "all") {
+      const items = bot.inventory.items();
+      let dropped = 0;
+      for (const item of items) {
+        try {
+          await bot.tossStack(item);
+          dropped += item.count;
+          await new Promise((r) => setTimeout(r, 150));
+        } catch {}
+      }
+      return { ok: true, message: `Dropped all items (${dropped} total)` };
+    }
+    const itemId = Number(target);
+    if (Number.isInteger(itemId)) {
+      const items = bot.inventory.items();
+      const found = items.find((i) => i.slot === itemId);
+      if (!found) return { ok: false, message: `Item at slot ${itemId} not found` };
+      await bot.tossStack(found);
+      return { ok: true, message: `Dropped ${found.name} x${found.count}` };
+    }
+    const items = bot.inventory.items();
+    const matching = items.filter((i) => i.name === target.toLowerCase());
+    if (matching.length === 0) return { ok: false, message: `No items named '${target}' in inventory` };
+    let dropped = 0;
+    for (const item of matching) {
+      try {
+        await bot.tossStack(item);
+        dropped += item.count;
+        await new Promise((r) => setTimeout(r, 150));
+      } catch {}
+    }
+    return { ok: true, message: `Dropped ${dropped}x ${target}` };
+  }
+
+  private async executeGiveCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
+    const target = args[0];
+    const itemName = args[1];
+    const count = Number(args[2] ?? "1");
+    if (!target || !itemName) return { ok: false, message: "Usage: give <player> <item_name> [count]" };
+    if (!Number.isInteger(count) || count < 1 || count > 64) return { ok: false, message: "Count must be 1..64" };
+    const bot = this.primaryBot();
+    if (!bot) return { ok: false, message: "No bot" };
+    const items = bot.inventory.items();
+    const matching = items.filter((i) => i.name === itemName.toLowerCase());
+    if (matching.length === 0) return { ok: false, message: `No ${itemName} in inventory` };
+    let given = 0;
+    for (const item of matching) {
+      if (given >= count) break;
+      const giveAmount = Math.min(count - given, item.count);
+      try {
+        await bot.toss((item as any).id, null, giveAmount);
+        given += giveAmount;
+      } catch {}
+    }
+    this.forEachBot((b) => b.chat(`/give ${target} ${itemName} ${given}`));
+    return { ok: true, message: `Gave ${given}x ${itemName} to ${target} from ${this.bots.length} bot(s)` };
+  }
+
+  private async executeBridgeCommand(length: number): Promise<{ ok: boolean; message: string }> {
+    const bot = this.primaryBot();
+    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt", "oak_planks", "spruce_planks"]);
+    if (!blockId) return { ok: false, message: "No bridging blocks in hotbar" };
+    let placed = 0;
+    for (let i = 0; i < length; i++) {
+      bot.setControlState("back", true);
+      await new Promise((r) => setTimeout(r, 150));
+      bot.setControlState("back", false);
+      bot.setControlState("sneak", true);
+      const pos = (bot as any).blockAtCursor?.(5) ?? bot.blockAt(bot.entity.position.offset(0, -1, 0));
+      if (!pos || pos.name === "air") {
+        bot.setControlState("sneak", false);
+        break;
+      }
+      bot.setQuickBarSlot(blockId);
+      try {
+        await bot.placeBlock(pos, new Vec3(0, 1, 0));
+        placed++;
+        await new Promise((r) => setTimeout(r, 200));
+      } catch {}
+    }
+    bot.setControlState("sneak", false);
+    return { ok: true, message: `Placed ${placed}/${length} bridge blocks` };
+  }
+
+  private async executePillarCommand(height: number): Promise<{ ok: boolean; message: string }> {
+    const bot = this.primaryBot();
+    if (!bot) return { ok: false, message: "No bot" };
+    const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt", "oak_planks", "spruce_planks"]);
+    if (!blockId) return { ok: false, message: "No building blocks in hotbar" };
+    let placed = 0;
+    for (let i = 0; i < height; i++) {
+      bot.look(0, -Math.PI / 2 + 0.1, true);
+      bot.setQuickBarSlot(blockId);
+      await new Promise<void>((r) => {
+        bot.once("physicTick", () => r());
+      });
+      const below = bot.blockAt(bot.entity.position.offset(0, -1, 0));
+      if (!below || below.name === "air") break;
+      try {
+        await bot.placeBlock(below, new Vec3(0, 1, 0));
+        placed++;
+        bot.setControlState("jump", true);
+        await new Promise((r) => setTimeout(r, 200));
+        bot.setControlState("jump", false);
+        await new Promise((r) => setTimeout(r, 300));
+      } catch {
+        break;
+      }
+    }
+    return { ok: true, message: `Built pillar ${placed}/${height} blocks high` };
+  }
+
+  private getBestBlockInHotbar(bot: mineflayer.Bot, names: string[]): number | null {
+    for (const name of names) {
+      const items = bot.inventory.slots.slice(36, 45);
+      const item = items.find((i) => i && i.name === name);
+      if (item) return item.slot - 36;
+    }
+    return null;
+  }
+
+  private async executeWallCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
+    const direction = args[0]?.toLowerCase() ?? "front";
+    const heightArg = Number(args[1] ?? "3");
+    const width = Number(args[2] ?? "3");
+    if (!["front", "left", "right"].includes(direction)) return { ok: false, message: "Usage: wall front|left|right [height 1..5] [width 1..5]" };
+    const height = Math.min(5, Math.max(1, heightArg));
+    const w = Math.min(5, Math.max(1, width));
+    const bot = this.primaryBot();
+    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt", "oak_planks"]);
+    if (!blockId) return { ok: false, message: "No blocks in hotbar" };
+    const offsetsMap: Record<string, Array<[number, number]>> = { front: [[0, 1]], left: [[1, 0]], right: [[-1, 0]] };
+    const offsets = offsetsMap[direction] ?? [[0, 1]];
+    const yaw = bot.entity.yaw;
+    let placed = 0;
+    bot.setControlState("sneak", true);
+    for (let h = 0; h < height; h++) {
+      for (let sw = 0; sw < w; sw++) {
+        const [ox, oz] = offsets[0];
+        // Simplified placement - place blocks relative to bot facing direction
+        const sideX = Math.round(-Math.sin(yaw)) * ox + Math.round(Math.cos(yaw)) * (-oz);
+        const sideZ = Math.round(Math.cos(yaw)) * ox + Math.round(Math.sin(yaw)) * oz;
+
+        const ref = bot.blockAt(bot.entity.position.offset(sideX * (sw + 1), h, sideZ * (sw + 1)))
+          ?? bot.blockAt(bot.entity.position.offset(0, -1, 0));
+        if (!ref || ref.name === "air") continue;
+        bot.setQuickBarSlot(blockId);
+        try {
+          await bot.placeBlock(ref, new Vec3(0, 1, 0));
+          placed++;
+          await new Promise((r) => setTimeout(r, 120));
+        } catch {}
+      }
+    }
+    bot.setControlState("sneak", false);
+    return { ok: true, message: `Built ${w}x${height} wall (${placed} blocks)` };
+  }
+
+  private async executeFillCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
+    const radius = Number(args[0] ?? "3");
+    const depth = Number(args[1] ?? "1");
+    if (!Number.isInteger(radius) || radius < 1 || radius > 5) return { ok: false, message: "Usage: fill <radius 1..5> [depth 1..3]" };
+    if (!Number.isInteger(depth) || depth < 1 || depth > 3) return { ok: false, message: "Depth must be 1..3" };
+    const bot = this.primaryBot();
+    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt"]);
+    if (!blockId) return { ok: false, message: "No blocks in hotbar" };
+    let placed = 0;
+    const origin = bot.entity.position.floored();
+    for (let x = -radius; x <= radius; x++) {
+      for (let z = -radius; z <= radius; z++) {
+        for (let d = 0; d < depth; d++) {
+          const block = bot.blockAt(origin.offset(x, -1 - d, z));
+          if (!block || block.name !== "air") continue;
+          bot.setQuickBarSlot(blockId);
+          try {
+            await bot.placeBlock(block, new Vec3(0, 1, 0));
+            placed++;
+          } catch {}
+        }
+      }
+    }
+    return { ok: true, message: `Filled ${radius} radius area (${placed} blocks)` };
+  }
+
+  private async executeTowerCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
+    const height = Number(args[0] ?? "10");
+    if (!Number.isInteger(height) || height < 1 || height > 30) return { ok: false, message: "Usage: tower <height 1..30>" };
+    const bot = this.primaryBot();
+    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt"]);
+    if (!blockId) return { ok: false, message: "No blocks in hotbar" };
+    let built = 0;
+    bot.setControlState("sneak", true);
+    for (let i = 0; i < height; i++) {
+      bot.setQuickBarSlot(blockId);
+      bot.look(0, -Math.PI / 2 + 0.2, true);
+      const below = bot.blockAt(bot.entity.position.offset(0, -1, 0));
+      if (!below || below.name === "air") break;
+      try {
+        await bot.placeBlock(below, new Vec3(0, 1, 0));
+        built++;
+        bot.setControlState("jump", true);
+        await new Promise((r) => setTimeout(r, 250));
+        bot.setControlState("jump", false);
+        await new Promise((r) => setTimeout(r, 400));
+      } catch {
+        break;
+      }
+    }
+    bot.setControlState("sneak", false);
+    return { ok: true, message: `Built tower ${built}/${height} blocks tall` };
   }
 
   private async executeMineCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
@@ -688,7 +1116,7 @@ export class BotManager {
       const dist = bot.entity.position.distanceTo(targetEntity.position);
       bot.lookAt(targetEntity.position.offset(0, 1.6, 0), true);
 
-      if (dist > 3) {
+      if (dist > (this.config.reach ?? 3)) {
         this.driveToward(runtime, targetEntity.position, 4.5);
         return;
       }
@@ -696,7 +1124,7 @@ export class BotManager {
       bot.setControlState("forward", false);
       bot.setControlState("sprint", false);
 
-      if (bot.entity.onGround) {
+      if (this.config.critMode && bot.entity.onGround) {
         bot.setControlState("jump", true);
         setTimeout(() => bot.setControlState("jump", false), 120);
       }
@@ -813,6 +1241,8 @@ export class BotManager {
       runtime.lastPos = null;
       runtime.lastMoveAt = Date.now();
       this.updateAggregateState();
+      if (this.config.autoArmor) this.tryEquipArmor(bot);
+      if (this.config.autoTotem) this.tryEquipTotem(bot);
     });
 
     bot.on("chat", (username, message) => {
@@ -833,6 +1263,27 @@ export class BotManager {
       this.appendLog("chat", message);
       const sender = this.extractSenderFromMessage(message);
       this.tryRunChatCommand(sender, message, bot, false);
+    });
+
+    bot.on("health", () => {
+      if (this.config.autoEat) this.tryAutoEat(bot);
+      if (this.config.autoArmor) this.tryEquipArmor(bot);
+      if (this.config.autoTotem) this.tryEquipTotem(bot);
+    });
+
+    bot.on("death", () => {
+      const pos = bot.entity?.position;
+      if (pos) {
+        this.deathPositions.set(bot.username, {
+          x: Number(pos.x.toFixed(1)),
+          y: Number(pos.y.toFixed(1)),
+          z: Number(pos.z.toFixed(1))
+        });
+      }
+      this.appendLog("system", `${bot.username} died`);
+      if (this.config.autoRespawn) {
+        setTimeout(() => bot.chat("/spawn"), 500);
+      }
     });
 
     bot.on("windowOpen", () => {
@@ -881,6 +1332,110 @@ export class BotManager {
       };
       this.appendLog("error", `${bot.username} kicked: ${reasonText}`);
     });
+
+    if (this.config.parkour) this.startParkourLoop(runtime);
+  }
+
+  private tryAutoEat(bot: mineflayer.Bot): void {
+    if (bot.food >= 18) return;
+    const foods = [
+      "enchanted_golden_apple",
+      "golden_apple",
+      "cooked_beef",
+      "cooked_porkchop",
+      "cooked_chicken",
+      "cooked_salmon",
+      "bread",
+      "apple",
+      "carrot",
+      "potato"
+    ];
+    const items = bot.inventory.items();
+    for (const foodName of foods) {
+      const item = items.find((i) => i.name === foodName);
+      if (item) {
+        void bot.consume().catch(() => {});
+        return;
+      }
+    }
+  }
+
+  private tryEquipArmor(bot: mineflayer.Bot): void {
+    const slots = [
+      { slot: "feet", priority: ["netherite_boots", "diamond_boots", "iron_boots", "golden_boots", "leather_boots"] },
+      { slot: "legs", priority: ["netherite_leggings", "diamond_leggings", "iron_leggings", "golden_leggings", "leather_leggings"] },
+      { slot: "torso", priority: ["netherite_chestplate", "diamond_chestplate", "iron_chestplate", "golden_chestplate", "leather_chestplate"] },
+      { slot: "head", priority: ["netherite_helmet", "diamond_helmet", "iron_helmet", "golden_helmet", "leather_helmet"] }
+    ];
+    const items = bot.inventory.items();
+    for (const { slot, priority } of slots) {
+      const equipped = bot.inventory.slots[(bot as any).inventorySlots[slot]];
+      let equippedIdx = -1;
+      if (equipped) equippedIdx = priority.indexOf(equipped.name);
+      for (const armorName of priority) {
+        const item = items.find((i) => i.name === armorName);
+        if (item) {
+          const itemPriorityIdx = priority.indexOf(armorName);
+          if (equippedIdx === -1 || itemPriorityIdx < equippedIdx) {
+            void bot.equip(item, slot as any).catch(() => {});
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  private tryEquipTotem(bot: mineflayer.Bot): void {
+    const offhand = bot.inventory.slots[45];
+    if (offhand && offhand.name === "totem_of_undying") return;
+    const items = bot.inventory.items();
+    const totem = items.find((i) => i.name === "totem_of_undying");
+    if (totem) {
+      void bot.equip(totem, "off-hand").catch(() => {});
+    }
+  }
+
+  private startParkourLoop(runtime: BotRuntime): void {
+    if (!this.config.parkour) return;
+    this.clearBehavior(runtime);
+    runtime.behaviorTimer = setInterval(() => {
+      const bot = runtime.bot;
+      if (!bot.entity) return;
+
+      const jumpCooldown = 600;
+      const now = Date.now();
+      const canJump = !bot.controlState.jump;
+
+      const forward = bot.blockAt(bot.entity.position.offset(-Math.sin(bot.entity.yaw) * 1.2, 0, Math.cos(bot.entity.yaw) * 1.2));
+      const forwardHead = bot.blockAt(bot.entity.position.offset(-Math.sin(bot.entity.yaw) * 1.2, 1, Math.cos(bot.entity.yaw) * 1.2));
+
+      if ((forward && forward.boundingBox === "block") && (!forwardHead || forwardHead.boundingBox !== "block")) {
+        if (canJump || now - runtime.lastMoveAt > jumpCooldown) {
+          bot.setControlState("forward", true);
+          bot.setControlState("jump", true);
+          runtime.lastMoveAt = now;
+        }
+      } else {
+        bot.setControlState("jump", false);
+        bot.setControlState("forward", true);
+
+        if (runtime.lastMoveAt && runtime.lastPos) {
+          const moved = Math.hypot(
+            bot.entity.position.x - runtime.lastPos.x,
+            bot.entity.position.z - runtime.lastPos.z
+          );
+          if (moved < 0.3) {
+            bot.look(bot.entity.yaw + Math.PI / 2, bot.entity.pitch, true);
+            runtime.lastMoveAt = now;
+            runtime.lastPos = {
+              x: bot.entity.position.x,
+              y: bot.entity.position.y,
+              z: bot.entity.position.z
+            };
+          }
+        }
+      }
+    }, 80);
   }
 
   private formatMcJsonToHtml(node: any): string {
@@ -929,7 +1484,7 @@ export class BotManager {
     return withoutAddress;
   }
 
-  private extractChatCommand(message: string): string | null {
+  private extractChatCommandFastMC(message: string): string | null {
     const trimmed = message.trim();
     const direct = trimmed.match(/^(?:@?minebot|@?bot)\s*[:,]?\s+(.+)$/i);
     if (direct) return direct[1].trim() || null;
@@ -949,6 +1504,38 @@ export class BotManager {
     if (trimmed.startsWith("#")) return trimmed.slice(1).trim() || null;
     if (trimmed.startsWith("*")) return trimmed.slice(1).trim() || null;
     return null;
+  }
+
+  private extractChatCommandVanilla(message: string): string | null {
+    const trimmed = message.trim();
+    const standard = trimmed.match(/^<[^>]+>\s*@bot\s+(.+)$/);
+    if (standard) return standard[1].trim() || null;
+
+    const commandPrefix = trimmed.match(/^\[Bot\]\s*(.+)$/i);
+    if (commandPrefix) return commandPrefix[1].trim() || null;
+
+    const rawCommand = trimmed.match(/^!bot\s+(.+)$/i);
+    if (rawCommand) return rawCommand[1].trim() || null;
+
+    if (trimmed.startsWith("!")) return trimmed.slice(1).trim() || null;
+    if (trimmed.startsWith("/!")) return trimmed.slice(2).trim() || null;
+
+    return null;
+  }
+
+  private extractChatCommand(message: string): string | null {
+    const profile = this.config.chatProfile ?? "fastmc";
+    if (profile === "vanilla") {
+      return this.extractChatCommandVanilla(message);
+    }
+    return this.extractChatCommandFastMC(message);
+  }
+
+  private extractSenderFromMessageWithVanilla(message: string): string | null {
+    const vanillaMatch = message.match(/^<([A-Za-z0-9_]{3,16})>/);
+    if (vanillaMatch) return vanillaMatch[1].trim();
+
+    return this.extractSenderFromMessage(message);
   }
 
   private extractSenderFromMessage(message: string): string | null {
@@ -988,20 +1575,21 @@ export class BotManager {
   }
 
   private tryRunChatCommand(sender: string | null, message: string, bot: mineflayer.Bot, reply: boolean): void {
-    const command = this.withCommandContext(this.extractChatCommand(message), sender);
+    const effectiveSender = this.extractSenderFromMessageWithVanilla(message) ?? sender;
+    const command = this.withCommandContext(this.extractChatCommand(message), effectiveSender);
     if (!command) return;
-    if (!this.isAdmin(sender)) {
-      this.appendLog("system", `Команда отклонена (не админ): ${sender ?? "unknown"} -> ${command}`);
-      if (reply && sender) bot.chat(`[err] ${sender} is not admin`);
+    if (!this.isAdmin(effectiveSender)) {
+      this.appendLog("system", `Команда отклонена (не админ): ${effectiveSender ?? "unknown"} -> ${command}`);
+      if (reply && effectiveSender) bot.chat(`[err] ${effectiveSender} is not admin`);
       return;
     }
-    const key = `${sender}|${command}`;
+    const key = `${effectiveSender}|${command}`;
     const now = Date.now();
     if (key === this.lastChatCommandKey && now - this.lastChatCommandAt < 700) return;
     this.lastChatCommandKey = key;
     this.lastChatCommandAt = now;
     void this.executeCommand(command).then((result) => {
-      this.appendLog("system", `Чат-команда: ${sender ?? "unknown"} -> ${command} (${result.ok ? "ok" : "err"})`);
+      this.appendLog("system", `Чат-команда: ${effectiveSender ?? "unknown"} -> ${command} (${result.ok ? "ok" : "err"})`);
       if (reply) bot.chat(result.ok ? `[ok] ${result.message}` : `[err] ${result.message}`);
     });
   }
@@ -1028,5 +1616,78 @@ export class BotManager {
     const nearestNamed = bot.nearestEntity((e) => e.type === "player" && String((e as any).username ?? "").toLowerCase() === needle);
     if (nearestNamed) return nearestNamed;
     return null;
+  }
+
+  // Сборки (Presets) Management
+
+  async savePreset(name: string): Promise<{ ok: boolean; message: string }> {
+    const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+    if (!sanitized) return { ok: false, message: "Invalid preset name" };
+    try {
+      await Bun.write(`${this.presetsDir}/${sanitized}.json`, JSON.stringify(this.config, null, 2));
+      return { ok: true, message: `Preset '${sanitized}' saved` };
+    } catch (err) {
+      return { ok: false, message: `Failed to save preset: ${this.errorMessage(err)}` };
+    }
+  }
+
+  async loadPreset(name: string): Promise<{ ok: boolean; message: string }> {
+    const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+    try {
+      const file = await Bun.file(`${this.presetsDir}/${sanitized}.json`);
+      if (!(file as any).exists()) return { ok: false, message: `Preset '${sanitized}' not found` };
+      const preset = JSON.parse(await file.text()) as BotConfig;
+      this.config = { ...DEFAULT_CONFIG, ...preset };
+      return { ok: true, message: `Preset '${sanitized}' loaded` };
+    } catch (err) {
+      return { ok: false, message: `Failed to load preset: ${this.errorMessage(err)}` };
+    }
+  }
+
+  async deletePreset(name: string): Promise<{ ok: boolean; message: string }> {
+    const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+    try {
+      const file = await Bun.file(`${this.presetsDir}/${sanitized}.json`);
+      if (!(file as any).exists()) return { ok: false, message: `Preset '${sanitized}' not found` };
+      await Bun.write(`${this.presetsDir}/${sanitized}.json`, "");
+      return { ok: true, message: `Preset '${sanitized}' deleted` };
+    } catch (err) {
+      return { ok: false, message: `Failed to delete preset: ${this.errorMessage(err)}` };
+    }
+  }
+
+  async listPresets(): Promise<string[]> {
+    try {
+      await Bun.write(`${this.presetsDir}/.keep`, "");
+      const entries: string[] = [];
+      for await (const file of new Bun.Glob("*.json").scan(this.presetsDir)) {
+        entries.push(file.slice(0, -5));
+      }
+      return entries;
+    } catch {
+      return [];
+    }
+  }
+
+  async executePresetCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
+    const action = (args[0] ?? "list").toLowerCase();
+    if (action === "save") {
+      const name = args[1];
+      if (!name) return { ok: false, message: "Usage: preset save <name>" };
+      return this.savePreset(name);
+    }
+    if (action === "load") {
+      const name = args[1];
+      if (!name) return { ok: false, message: "Usage: preset load <name>" };
+      return this.loadPreset(name);
+    }
+    if (action === "delete") {
+      const name = args[1];
+      if (!name) return { ok: false, message: "Usage: preset delete <name>" };
+      return this.deletePreset(name);
+    }
+    const presets = await this.listPresets();
+    if (presets.length === 0) return { ok: true, message: "No presets saved" };
+    return { ok: true, message: `Presets: ${presets.join(", ")}` };
   }
 }
