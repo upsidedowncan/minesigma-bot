@@ -140,9 +140,9 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
     .btn-outline-primary,
     .btn-light,
     .btn-dark {
-      border-color:var(--line);
+      border-color:var(--line2);
       background:#11161e;
-      color:var(--muted);
+      color:var(--txt);
       box-shadow:0 6px 0 #11161d;
     }
     .btn-outline-danger:hover,
@@ -152,8 +152,8 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
     .btn-light:hover,
     .btn-dark:hover {
       color:var(--txt);
-      background:#141a23;
-      border-color:var(--line2);
+      background:#1a2230;
+      border-color:var(--cyan);
     }
     .btn-warning {
       border-color:#614f1f;
@@ -170,6 +170,15 @@ export const renderPage = (config: BotConfig): string => `<!doctype html>
       color:#f9d4d4;
       background:#341617;
       border-color:#b85f5f;
+    }
+    .btn-outline-dark {
+      border-color:var(--line2) !important;
+      color:var(--txt) !important;
+    }
+    .btn-outline-dark:hover {
+      color:var(--txt) !important;
+      background:#1a2230 !important;
+      border-color:var(--cyan) !important;
     }
     .btn-outline-warning {
       border-color:#614f1f;

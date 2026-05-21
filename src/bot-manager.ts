@@ -182,14 +182,14 @@ export class BotManager {
   }
 
   async executeCommand(raw: string): Promise<{ ok: boolean; message: string }> {
-    if (this.bots.length === 0) return { ok: false, message: "Bot is not running" };
+    if (this.bots.length === 0) return { ok: false, message: "Боты не запущены" };
     const text = this.normalizeCommand(raw);
-    if (!text) return { ok: false, message: "Command is empty" };
+    if (!text) return { ok: false, message: "Команда пустая" };
 
     const clickSlotMatch = text.match(/^click\.item\.slot\.(\d+)$/i);
     if (clickSlotMatch) {
       const slot = Number(clickSlotMatch[1]);
-      if (!Number.isInteger(slot) || slot < 0 || slot > 8) return { ok: false, message: "Hotbar slot must be 0..8" };
+      if (!Number.isInteger(slot) || slot < 0 || slot > 8) return { ok: false, message: "Слот должен быть 0..8" };
       this.forEachBot((bot) => {
         bot.setQuickBarSlot(slot);
         bot.activateItem();
@@ -199,7 +199,7 @@ export class BotManager {
           } catch {}
         }, 200);
       });
-      return { ok: true, message: `Used hotbar slot ${slot} on ${this.bots.length} bot(s)` };
+      return { ok: true, message: `Использован слот ${slot} на ${this.bots.length} боте(ах)` };
     }
 
     const [cmdRaw, ...args] = text.split(/\s+/);
@@ -208,24 +208,24 @@ export class BotManager {
 
     if (cmd === "summon") {
       const count = Number(args[0] ?? "1");
-      if (!Number.isInteger(count) || count < 1 || count > 25) return { ok: false, message: "Usage: summon <1..25>" };
+      if (!Number.isInteger(count) || count < 1 || count > 25) return { ok: false, message: "Использование: summon <1..25>" };
       await this.spawnBots(count);
-      return { ok: true, message: `Summoned ${count} bot(s), total ${this.bots.length}` };
+      return { ok: true, message: `Заспавнено ${count} бот(ов), всего ${this.bots.length}` };
     }
     if (cmd === "despawn" || cmd === "kickbots") {
       await this.stop("Despawn");
-      return { ok: true, message: "All bots despawned" };
+      return { ok: true, message: "Все боты отключены" };
     }
     if (cmd === "say") {
       this.forEachBot((bot) => bot.chat(rest || "..."));
-      return { ok: true, message: `Sent chat from ${this.bots.length} bot(s)` };
+      return { ok: true, message: `Сообщение отправлено от ${this.bots.length} бот(а)` };
     }
     if (cmd === "msg" || cmd === "message" || cmd === "tell") {
       const target = args[0];
       const message = args.slice(1).join(" ").trim();
-      if (!target || !message) return { ok: false, message: "Usage: bot message <player> <text>" };
+      if (!target || !message) return { ok: false, message: "Использование: bot message <игрок> <текст>" };
       this.forEachBot((bot) => bot.chat(`/msg ${target} ${message}`));
-      return { ok: true, message: `Messaged ${target} from ${this.bots.length} bot(s)` };
+      return { ok: true, message: `ЛС отправлено ${target} от ${this.bots.length} бот(а)` };
     }
     if (cmd === "spammer") {
       return this.configureSpammer(args);
@@ -235,101 +235,101 @@ export class BotManager {
         bot.setControlState("jump", true);
         setTimeout(() => bot.setControlState("jump", false), 250);
       });
-      return { ok: true, message: "Jumped" };
+      return { ok: true, message: "Прыжок выполнен" };
     }
     if (cmd === "forward" || cmd === "back" || cmd === "left" || cmd === "right") {
       const blocks = Number(args[0] ?? "1");
-      if (Number.isNaN(blocks) || blocks <= 0) return { ok: false, message: `Usage: ${cmd} <blocks>` };
+      if (Number.isNaN(blocks) || blocks <= 0) return { ok: false, message: `Использование: ${cmd} <блоки>` };
       const ms = Math.min(12000, Math.max(200, Math.round(blocks * 350)));
       this.forEachBot((bot) => {
         bot.setControlState(cmd as "forward" | "back" | "left" | "right", true);
         setTimeout(() => bot.setControlState(cmd as "forward" | "back" | "left" | "right", false), ms);
       });
-      return { ok: true, message: `${cmd} ${blocks}` };
+      return { ok: true, message: `${cmd} ${blocks} блоков` };
     }
     if (cmd === "stop") {
       this.forEachBot((bot) => this.clearControlStates(bot));
       this.bots.forEach((runtime) => this.clearBehavior(runtime));
       this.stopSpammer();
-      return { ok: true, message: "Stopped movement/behavior" };
+      return { ok: true, message: "Движение и поведение остановлены" };
     }
     if (cmd === "hold") {
       const slot = Number(args[0]);
-      if (!Number.isInteger(slot) || slot < 0 || slot > 8) return { ok: false, message: "Usage: bot hold <0..8>" };
+      if (!Number.isInteger(slot) || slot < 0 || slot > 8) return { ok: false, message: "Использование: bot hold <0..8>" };
       this.forEachBot((bot) => bot.setQuickBarSlot(slot));
-      return { ok: true, message: `Selected hotbar slot ${slot}` };
+      return { ok: true, message: `Выбран слот ${slot}` };
     }
     if (cmd === "sneak" || cmd === "sprint") {
       const enabled = this.parseToggle(args[0]);
-      if (enabled === null) return { ok: false, message: `Usage: bot ${cmd} on|off` };
+      if (enabled === null) return { ok: false, message: `Использование: bot ${cmd} on|off` };
       this.forEachBot((bot) => bot.setControlState(cmd as "sneak" | "sprint", enabled));
-      return { ok: true, message: `${cmd} ${enabled ? "on" : "off"}` };
+      return { ok: true, message: `${cmd} ${enabled ? "вкл" : "выкл"}` };
     }
     if (cmd === "players") {
       const primary = this.primaryBot();
       const players = primary ? Object.keys(primary.players).sort() : [];
-      return { ok: true, message: players.length ? `Players: ${players.join(", ")}` : "No players visible" };
+      return { ok: true, message: players.length ? `Игроки: ${players.join(", ")}` : "Нет игроков рядом" };
     }
     if (cmd === "status") {
       return { ok: true, message: this.getStatusLine() };
     }
     if (cmd === "logout") {
       await this.stop("Logout requested");
-      return { ok: true, message: "Logged out" };
+      return { ok: true, message: "Выход выполнен" };
     }
     if (cmd === "reconnect") {
       await this.restart();
-      return { ok: true, message: "Reconnecting" };
+      return { ok: true, message: "Переподключение" };
     }
     if (cmd === "follow") {
       const target = rest.trim();
-      if (!target) return { ok: false, message: "Usage: follow <player>" };
+      if (!target) return { ok: false, message: "Использование: follow <игрок>" };
       this.bots.forEach((runtime) => this.startFollow(runtime, target));
-      return { ok: true, message: `Following ${target}` };
+      return { ok: true, message: `Следую за ${target}` };
     }
     if (cmd === "come") {
       const target = rest.trim();
-      if (!target) return { ok: false, message: "Usage: bot come <player>" };
+      if (!target) return { ok: false, message: "Использование: bot come <игрок>" };
       this.bots.forEach((runtime) => this.startFollow(runtime, target));
-      return { ok: true, message: `Coming to ${target}` };
+      return { ok: true, message: `Иду к ${target}` };
     }
     if (cmd === "look") {
       const target = rest.trim();
-      if (!target) return { ok: false, message: "Usage: bot look <player>" };
+      if (!target) return { ok: false, message: "Использование: bot look <игрок>" };
       this.forEachBot((bot) => {
         const ent = this.findPlayerEntity(bot, target);
         if (ent) void bot.lookAt(ent.position.offset(0, 1.6, 0), true);
       });
-      return { ok: true, message: `Looking at ${target}` };
+      return { ok: true, message: `Смотрю на ${target}` };
     }
     if (cmd === "guard") {
       const target = rest.trim();
-      if (!target) return { ok: false, message: "Usage: bot guard <player>" };
+      if (!target) return { ok: false, message: "Использование: bot guard <игрок>" };
       this.bots.forEach((runtime) => this.startGuard(runtime, target));
-      return { ok: true, message: `Guarding ${target}` };
+      return { ok: true, message: `Охраняю ${target}` };
     }
     if (cmd === "spin") {
       const target = rest.trim();
       if (target) {
         this.bots.forEach((runtime) => this.startSpinAround(runtime, target));
-        return { ok: true, message: `Spinning around ${target}` };
+        return { ok: true, message: `Кружусь вокруг ${target}` };
       }
       this.forEachBot((bot) => bot.look(bot.entity.yaw + Math.PI / 2, bot.entity.pitch, true));
-      return { ok: true, message: "Spun bot(s)" };
+      return { ok: true, message: "Поворот выполнен" };
     }
     if (cmd === "attack") {
       const target = rest.trim();
       this.bots.forEach((runtime) => this.startAttack(runtime, target || null));
-      return { ok: true, message: target ? `Attacking ${target}` : "Attacking nearest targets" };
+      return { ok: true, message: target ? `Атакую ${target}` : "Атакую ближайших" };
     }
     if (cmd === "slot") {
       const index = Number(args[0]);
-      if (!Number.isInteger(index) || index < 0) return { ok: false, message: "Usage: slot <index>" };
+      if (!Number.isInteger(index) || index < 0) return { ok: false, message: "Использование: slot <индекс>" };
       const primary = this.bots[0]?.bot;
-      if (!primary) return { ok: false, message: "No bot" };
+      if (!primary) return { ok: false, message: "Нет бота" };
       await primary.clickWindow(index, 0, 0);
       this.updateGuiSnapshot(primary);
-      return { ok: true, message: `Clicked slot ${index}` };
+      return { ok: true, message: `Нажат слот ${index}` };
     }
     if (cmd === "mine") {
       return this.executeMineCommand(args);
@@ -348,29 +348,29 @@ export class BotManager {
     }
     if (cmd === "tpa") {
       const target = rest.trim();
-      if (!target) return { ok: false, message: "Usage: tpa <player>" };
+      if (!target) return { ok: false, message: "Использование: tpa <игрок>" };
       this.forEachBot((bot) => bot.chat(`/tpa ${target}`));
-      return { ok: true, message: `TPA sent to ${target} from ${this.bots.length} bot(s)` };
+      return { ok: true, message: `Запрос TPA отправлен ${target} от ${this.bots.length} бот(а)` };
     }
     if (cmd === "tpahere") {
       const target = rest.trim();
-      if (!target) return { ok: false, message: "Usage: tpahere <player>" };
+      if (!target) return { ok: false, message: "Использование: tpahere <игрок>" };
       this.forEachBot((bot) => bot.chat(`/tpahere ${target}`));
-      return { ok: true, message: `TPAHere sent to ${target} from ${this.bots.length} bot(s)` };
+      return { ok: true, message: `Запрос TPAHere отправлен ${target} от ${this.bots.length} бот(а)` };
     }
     if (cmd === "home") {
       const name = rest.trim();
-      if (!name) return { ok: false, message: "Usage: home <name>" };
+      if (!name) return { ok: false, message: "Использование: home <название>" };
       const home = this.homes.get(name);
-      if (!home) return { ok: false, message: `Home '${name}' not found` };
+      if (!home) return { ok: false, message: `Дом '${name}' не найден` };
       this.forEachBot((bot) => bot.chat(`/tpa ${home.x} ${home.y} ${home.z}`));
-      return { ok: true, message: `Teleporting to home '${name}' at ${home.x}, ${home.y}, ${home.z}` };
+      return { ok: true, message: `Телепорт к дому '${name}' на ${home.x}, ${home.y}, ${home.z}` };
     }
     if (cmd === "sethome") {
       const name = rest.trim();
-      if (!name) return { ok: false, message: "Usage: sethome <name>" };
+      if (!name) return { ok: false, message: "Использование: sethome <название>" };
       const primary = this.primaryBot();
-      if (!primary || !primary.entity) return { ok: false, message: "No bot position available" };
+      if (!primary || !primary.entity) return { ok: false, message: "Нет позиции бота" };
       const pos = primary.entity.position;
       this.homes.set(name, {
         name,
@@ -379,32 +379,32 @@ export class BotManager {
         z: Number(pos.z.toFixed(1)),
         dimension: (primary.entity as any).dimension
       });
-      return { ok: true, message: `Home '${name}' saved at ${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}` };
+      return { ok: true, message: `Дом '${name}' сохранён на ${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}` };
     }
     if (cmd === "delhome") {
       const name = rest.trim();
-      if (!name) return { ok: false, message: "Usage: delhome <name>" };
-      if (!this.homes.delete(name)) return { ok: false, message: `Home '${name}' not found` };
-      return { ok: true, message: `Home '${name}' deleted` };
+      if (!name) return { ok: false, message: "Использование: delhome <название>" };
+      if (!this.homes.delete(name)) return { ok: false, message: `Дом '${name}' не найден` };
+      return { ok: true, message: `Дом '${name}' удалён` };
     }
     if (cmd === "listhomes") {
-      if (this.homes.size === 0) return { ok: true, message: "No homes saved" };
+      if (this.homes.size === 0) return { ok: true, message: "Нет сохранённых домов" };
       const list = [...this.homes.values()].map((h) => `${h.name}: ${h.x}, ${h.y}, ${h.z}`).join("; ");
-      return { ok: true, message: `Homes: ${list}` };
+      return { ok: true, message: `Дома: ${list}` };
     }
     if (cmd === "bridge") {
       const length = Number(args[0] ?? "5");
-      if (!Number.isInteger(length) || length < 1 || length > 20) return { ok: false, message: "Usage: bridge <1..20>" };
+      if (!Number.isInteger(length) || length < 1 || length > 20) return { ok: false, message: "Использование: bridge <1..20>" };
       return this.executeBridgeCommand(length);
     }
     if (cmd === "pillar") {
       const height = Number(args[0] ?? "5");
-      if (!Number.isInteger(height) || height < 1 || height > 20) return { ok: false, message: "Usage: pillar <1..20>" };
+      if (!Number.isInteger(height) || height < 1 || height > 20) return { ok: false, message: "Использование: pillar <1..20>" };
       return this.executePillarCommand(height);
     }
     if (cmd === "autoeat" || cmd === "autototem" || cmd === "autoarmor" || cmd === "antiafk" || cmd === "autorespawn" || cmd === "crit" || cmd === "parkour") {
       const enabled = this.parseToggle(args[0]);
-      if (enabled === null) return { ok: false, message: `Usage: bot ${cmd} on|off` };
+      if (enabled === null) return { ok: false, message: `Использование: bot ${cmd} on|off` };
       const keyMap: Record<string, keyof BotConfig> = {
         autoeat: "autoEat",
         autototem: "autoTotem",
@@ -426,22 +426,22 @@ export class BotManager {
       if (cmd === "crit" && enabled) {
         (this.config as any).reach = (this.config.reach ?? 3);
       }
-      return { ok: true, message: `${cmd} ${enabled ? "enabled" : "disabled"}` };
+      return { ok: true, message: `${cmd} ${enabled ? "включён" : "выключен"}` };
     }
     if (cmd === "reach") {
       const dist = Number(args[0]);
-      if (!Number.isFinite(dist) || dist < 3 || dist > 6) return { ok: false, message: "Usage: bot reach <3..6>" };
+      if (!Number.isFinite(dist) || dist < 3 || dist > 6) return { ok: false, message: "Использование: bot reach <3..6>" };
       this.config.reach = dist;
-      return { ok: true, message: `Attack reach set to ${dist} blocks` };
+      return { ok: true, message: `Дальность атаки: ${dist} блоков` };
     }
     if (cmd === "preset") {
       return this.executePresetCommand(args);
     }
     if (cmd === "rescue") {
       const pos = this.deathPositions.get(this.primaryBot()?.username ?? "_default") ?? null;
-      if (!pos) return { ok: false, message: "No death position recorded" };
+      if (!pos) return { ok: false, message: "Нет позиции смерти" };
       const primary = this.primaryBot();
-      if (!primary || !primary.entity) return { ok: false, message: "No bot position" };
+      if (!primary || !primary.entity) return { ok: false, message: "Нет позиции бота" };
       const cur = primary.entity.position;
       const dx = Math.abs(cur.x - pos.x);
       const dy = Math.abs(cur.y - pos.y);
@@ -453,20 +453,20 @@ export class BotManager {
         const runtime = this.bots[0];
         this.driveToward(runtime, pos, 4);
       }
-      return { ok: true, message: `Moving to rescue point at ${pos.x}, ${pos.y}, ${pos.z}` };
+      return { ok: true, message: `Двигаюсь к точке спасения: ${pos.x}, ${pos.y}, ${pos.z}` };
     }
     if (cmd === "compass") {
       const target = rest.trim();
-      if (!target) return { ok: false, message: "Usage: compass <x z> or compass <player>" };
+      if (!target) return { ok: false, message: "Использование: compass <x z> или compass <игрок>" };
       const coords = target.split(/\s+/);
       let tx: number, tz: number;
       if (coords.length === 2) {
         tx = Number(coords[0]);
         tz = Number(coords[1]);
-        if (!Number.isFinite(tx) || !Number.isFinite(tz)) return { ok: false, message: "Invalid coordinates" };
+        if (!Number.isFinite(tx) || !Number.isFinite(tz)) return { ok: false, message: "Неверные координаты" };
       } else {
         const entity = this.findPlayerEntity(this.primaryBot()!, target);
-        if (!entity) return { ok: false, message: `Player '${target}' not found` };
+        if (!entity) return { ok: false, message: `Игрок '${target}' не найден` };
         tx = entity.position.x;
         tz = entity.position.z;
       }
@@ -475,7 +475,7 @@ export class BotManager {
         const yaw = Math.atan2(-(tz - bot.entity.position.z), -(tx - bot.entity.position.x));
         bot.look(yaw, bot.entity.pitch, true);
       });
-      return { ok: true, message: `Looking toward ${tx}, ${tz}` };
+      return { ok: true, message: `Смотрю в сторону ${tx}, ${tz}` };
     }
     if (cmd === "wall") {
       return this.executeWallCommand(args);
@@ -488,27 +488,27 @@ export class BotManager {
     }
     if (cmd === "health") {
       const primary = this.primaryBot();
-      if (!primary) return { ok: false, message: "No bot" };
+      if (!primary) return { ok: false, message: "Нет бота" };
       return {
         ok: true,
-        message: `HP: ${primary.health}/20, Food: ${primary.food}/20, Air: ${(primary as any).oxygenLevel ?? 0}/300`
+        message: `HP: ${primary.health}/20, Еда: ${primary.food}/20, Воздух: ${(primary as any).oxygenLevel ?? 0}/300`
       };
     }
     if (text.startsWith("/")) {
       this.forEachBot((bot) => bot.chat(text.startsWith("/") ? text : `/${text}`));
-      return { ok: true, message: `Command sent from ${this.bots.length} bot(s)` };
+      return { ok: true, message: `Команда отправлена от ${this.bots.length} бот(а)` };
     }
 
     this.forEachBot((bot) => bot.chat(text.startsWith("/") ? text : `/${text}`));
-    return { ok: true, message: `Command sent from ${this.bots.length} bot(s)` };
+    return { ok: true, message: `Команда отправлена от ${this.bots.length} бот(а)` };
   }
 
   async clickGuiSlot(index: number): Promise<{ ok: boolean; message: string }> {
     const primary = this.bots[0]?.bot;
-    if (!primary || !primary.currentWindow) return { ok: false, message: "No open GUI window" };
+    if (!primary || !primary.currentWindow) return { ok: false, message: "Нет открытого инвентаря" };
     await primary.clickWindow(index, 0, 0);
     this.updateGuiSnapshot(primary);
-    return { ok: true, message: `Clicked slot ${index}` };
+    return { ok: true, message: `Нажат слот ${index}` };
   }
 
   private async spawnBots(count: number): Promise<void> {
@@ -538,7 +538,7 @@ export class BotManager {
       };
       this.bots.push(runtime);
       this.bindBotEvents(runtime);
-      this.appendLog("system", `Connecting ${username}`);
+      this.appendLog("system", `Подключение ${username}`);
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
     this.updateAggregateState();
@@ -563,19 +563,19 @@ export class BotManager {
     const state = this.getState();
     const bots = this.getBots();
     const botText = bots.length
-      ? bots.map((bot) => `${bot.username} hp=${bot.health} food=${bot.food}`).join("; ")
-      : "none";
+      ? bots.map((bot) => `${bot.username} хп=${bot.health} еда=${bot.food}`).join("; ")
+      : "нет";
     const profile = this.config.chatProfile ?? "fastmc";
     const autos = [
-      this.config.autoEat ? "eat" : null,
-      this.config.autoTotem ? "totem" : null,
-      this.config.autoArmor ? "armor" : null,
-      this.config.antiAfk ? "afk" : null,
-      this.config.critMode ? "crit" : null
+      this.config.autoEat ? "еда" : null,
+      this.config.autoTotem ? "тотем" : null,
+      this.config.autoArmor ? "броня" : null,
+      this.config.antiAfk ? "афк" : null,
+      this.config.critMode ? "крит" : null
     ].filter(Boolean).join(",");
-    const autoStr = autos ? ` | auto[${autos}]` : "";
+    const autoStr = autos ? ` | авто[${autos}]` : "";
     const reach = this.config.reach ?? 3;
-    return `profile=${profile} | status=${state.status} | connected=${state.connected} | bots=${bots.length} | reach=${reach}${autoStr} | ${botText}`;
+    return `профиль=${profile} | статус=${state.status} | подключен=${state.connected} | боты=${bots.length} | дальность=${reach}${autoStr} | ${botText}`;
   }
 
   private clearBehavior(runtime: BotRuntime): void {
@@ -604,18 +604,18 @@ export class BotManager {
     const action = (args[0] ?? "status").toLowerCase();
     if (action === "stop" || action === "off") {
       this.stopSpammer();
-      return { ok: true, message: "Spammer stopped" };
+      return { ok: true, message: "Спаммер остановлен" };
     }
     if (action === "status") {
-      const running = this.spammer.timer ? "running" : "stopped";
-      const limit = this.spammer.remaining === null ? "forever" : `${this.spammer.remaining} left`;
+      const running = this.spammer.timer ? "работает" : "остановлен";
+      const limit = this.spammer.remaining === null ? "бесконечно" : `осталось ${this.spammer.remaining}`;
       return {
         ok: true,
-        message: `Spammer ${running}: every ${this.spammer.intervalMs}ms, ${limit}, message: ${this.spammer.message || "(none)"}`
+        message: `Спаммер ${running}: каждые ${this.spammer.intervalMs}мс, ${limit}, сообщение: ${this.spammer.message || "(нет)"}`
       };
     }
     if (action !== "start" && action !== "on") {
-      return { ok: false, message: "Usage: bot spammer start <interval> <message> [count] | bot spammer stop | bot spammer status" };
+      return { ok: false, message: "Использование: bot spammer start <интервал> <сообщение> [кол-во] | bot spammer stop | bot spammer status" };
     }
 
     const parsed = this.parseSpammerStart(args.slice(1));
@@ -632,7 +632,7 @@ export class BotManager {
     this.tickSpammer();
     return {
       ok: true,
-      message: `Spammer started every ${parsed.intervalMs}ms${parsed.count === null ? "" : ` for ${parsed.count} message(s)`}`
+      message: `Спаммер запущен каждые ${parsed.intervalMs}мс${parsed.count === null ? "" : ` на ${parsed.count} сообщений`}`
     };
   }
 
@@ -640,7 +640,7 @@ export class BotManager {
     const intervalRaw = args[0] ?? "";
     const intervalMs = this.parseDurationMs(intervalRaw);
     if (!intervalMs) {
-      return { ok: false, message: "Usage: bot spammer start <interval> <message> [count]" };
+      return { ok: false, message: "Использование: bot spammer start <интервал> <сообщение> [кол-во]" };
     }
 
     let messageParts = args.slice(1);
@@ -649,14 +649,14 @@ export class BotManager {
     if (countFlagIndex !== -1) {
       const value = Number(messageParts[countFlagIndex + 1]);
       if (!Number.isInteger(value) || value < 1 || value > 200) {
-        return { ok: false, message: "Spammer count must be 1..200" };
+        return { ok: false, message: "Кол-во должно быть 1..200" };
       }
       count = value;
       messageParts = [...messageParts.slice(0, countFlagIndex), ...messageParts.slice(countFlagIndex + 2)];
     }
 
     const message = messageParts.join(" ").trim();
-    if (!message) return { ok: false, message: "Spammer message is empty" };
+    if (!message) return { ok: false, message: "Сообщение пустое" };
     return { ok: true, intervalMs, message, count };
   }
 
@@ -706,7 +706,7 @@ export class BotManager {
 
   private async executeDropCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
     const bot = this.primaryBot();
-    if (!bot) return { ok: false, message: "No bot" };
+    if (!bot) return { ok: false, message: "Нет бота" };
     const target = args[0] ?? "all";
     if (target === "all") {
       const items = bot.inventory.items();
@@ -718,19 +718,19 @@ export class BotManager {
           await new Promise((r) => setTimeout(r, 150));
         } catch {}
       }
-      return { ok: true, message: `Dropped all items (${dropped} total)` };
+      return { ok: true, message: `Выкинуты все предметы (${dropped} шт.)` };
     }
     const itemId = Number(target);
     if (Number.isInteger(itemId)) {
       const items = bot.inventory.items();
       const found = items.find((i) => i.slot === itemId);
-      if (!found) return { ok: false, message: `Item at slot ${itemId} not found` };
+      if (!found) return { ok: false, message: `Предмет в слоте ${itemId} не найден` };
       await bot.tossStack(found);
-      return { ok: true, message: `Dropped ${found.name} x${found.count}` };
+      return { ok: true, message: `Выкинуто ${found.name} x${found.count}` };
     }
     const items = bot.inventory.items();
     const matching = items.filter((i) => i.name === target.toLowerCase());
-    if (matching.length === 0) return { ok: false, message: `No items named '${target}' in inventory` };
+    if (matching.length === 0) return { ok: false, message: `Нет предметов '${target}' в инвентаре` };
     let dropped = 0;
     for (const item of matching) {
       try {
@@ -739,20 +739,20 @@ export class BotManager {
         await new Promise((r) => setTimeout(r, 150));
       } catch {}
     }
-    return { ok: true, message: `Dropped ${dropped}x ${target}` };
+    return { ok: true, message: `Выкинуто ${dropped}x ${target}` };
   }
 
   private async executeGiveCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
     const target = args[0];
     const itemName = args[1];
     const count = Number(args[2] ?? "1");
-    if (!target || !itemName) return { ok: false, message: "Usage: give <player> <item_name> [count]" };
-    if (!Number.isInteger(count) || count < 1 || count > 64) return { ok: false, message: "Count must be 1..64" };
+    if (!target || !itemName) return { ok: false, message: "Использование: give <игрок> <предмет> [кол-во]" };
+    if (!Number.isInteger(count) || count < 1 || count > 64) return { ok: false, message: "Кол-во должно быть 1..64" };
     const bot = this.primaryBot();
-    if (!bot) return { ok: false, message: "No bot" };
+    if (!bot) return { ok: false, message: "Нет бота" };
     const items = bot.inventory.items();
     const matching = items.filter((i) => i.name === itemName.toLowerCase());
-    if (matching.length === 0) return { ok: false, message: `No ${itemName} in inventory` };
+    if (matching.length === 0) return { ok: false, message: `Нет ${itemName} в инвентаре` };
     let given = 0;
     for (const item of matching) {
       if (given >= count) break;
@@ -760,17 +760,18 @@ export class BotManager {
       try {
         await bot.toss((item as any).id, null, giveAmount);
         given += giveAmount;
+        await new Promise((r) => setTimeout(r, 150));
       } catch {}
     }
-    this.forEachBot((b) => b.chat(`/give ${target} ${itemName} ${given}`));
-    return { ok: true, message: `Gave ${given}x ${itemName} to ${target} from ${this.bots.length} bot(s)` };
+    this.forEachBot((b) => b.chat(`${target}, держи ${given}x ${itemName}!`));
+    return { ok: true, message: `Выкинуто ${given}x ${itemName} для ${target}` };
   }
 
   private async executeBridgeCommand(length: number): Promise<{ ok: boolean; message: string }> {
     const bot = this.primaryBot();
-    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    if (!bot || !bot.entity) return { ok: false, message: "Нет бота" };
     const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt", "oak_planks", "spruce_planks"]);
-    if (!blockId) return { ok: false, message: "No bridging blocks in hotbar" };
+    if (!blockId) return { ok: false, message: "Нет блоков для моста в хотбаре" };
     let placed = 0;
     for (let i = 0; i < length; i++) {
       bot.setControlState("back", true);
@@ -790,14 +791,14 @@ export class BotManager {
       } catch {}
     }
     bot.setControlState("sneak", false);
-    return { ok: true, message: `Placed ${placed}/${length} bridge blocks` };
+    return { ok: true, message: `Построен мост ${placed}/${length} блоков` };
   }
 
   private async executePillarCommand(height: number): Promise<{ ok: boolean; message: string }> {
     const bot = this.primaryBot();
-    if (!bot) return { ok: false, message: "No bot" };
+    if (!bot) return { ok: false, message: "Нет бота" };
     const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt", "oak_planks", "spruce_planks"]);
-    if (!blockId) return { ok: false, message: "No building blocks in hotbar" };
+    if (!blockId) return { ok: false, message: "Нет блоков в хотбаре" };
     let placed = 0;
     for (let i = 0; i < height; i++) {
       bot.look(0, -Math.PI / 2 + 0.1, true);
@@ -818,7 +819,7 @@ export class BotManager {
         break;
       }
     }
-    return { ok: true, message: `Built pillar ${placed}/${height} blocks high` };
+    return { ok: true, message: `Построен столб ${placed}/${height} блоков` };
   }
 
   private getBestBlockInHotbar(bot: mineflayer.Bot, names: string[]): number | null {
@@ -834,13 +835,13 @@ export class BotManager {
     const direction = args[0]?.toLowerCase() ?? "front";
     const heightArg = Number(args[1] ?? "3");
     const width = Number(args[2] ?? "3");
-    if (!["front", "left", "right"].includes(direction)) return { ok: false, message: "Usage: wall front|left|right [height 1..5] [width 1..5]" };
+    if (!["front", "left", "right"].includes(direction)) return { ok: false, message: "Использование: wall front|left|right [высота 1..5] [ширина 1..5]" };
     const height = Math.min(5, Math.max(1, heightArg));
     const w = Math.min(5, Math.max(1, width));
     const bot = this.primaryBot();
-    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    if (!bot || !bot.entity) return { ok: false, message: "Нет бота" };
     const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt", "oak_planks"]);
-    if (!blockId) return { ok: false, message: "No blocks in hotbar" };
+    if (!blockId) return { ok: false, message: "Нет блоков в хотбаре" };
     const offsetsMap: Record<string, Array<[number, number]>> = { front: [[0, 1]], left: [[1, 0]], right: [[-1, 0]] };
     const offsets = offsetsMap[direction] ?? [[0, 1]];
     const yaw = bot.entity.yaw;
@@ -849,7 +850,6 @@ export class BotManager {
     for (let h = 0; h < height; h++) {
       for (let sw = 0; sw < w; sw++) {
         const [ox, oz] = offsets[0];
-        // Simplified placement - place blocks relative to bot facing direction
         const sideX = Math.round(-Math.sin(yaw)) * ox + Math.round(Math.cos(yaw)) * (-oz);
         const sideZ = Math.round(Math.cos(yaw)) * ox + Math.round(Math.sin(yaw)) * oz;
 
@@ -865,18 +865,18 @@ export class BotManager {
       }
     }
     bot.setControlState("sneak", false);
-    return { ok: true, message: `Built ${w}x${height} wall (${placed} blocks)` };
+    return { ok: true, message: `Построена стена ${w}x${height} (${placed} блоков)` };
   }
 
   private async executeFillCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
     const radius = Number(args[0] ?? "3");
     const depth = Number(args[1] ?? "1");
-    if (!Number.isInteger(radius) || radius < 1 || radius > 5) return { ok: false, message: "Usage: fill <radius 1..5> [depth 1..3]" };
-    if (!Number.isInteger(depth) || depth < 1 || depth > 3) return { ok: false, message: "Depth must be 1..3" };
+    if (!Number.isInteger(radius) || radius < 1 || radius > 5) return { ok: false, message: "Использование: fill <радиус 1..5> [глубина 1..3]" };
+    if (!Number.isInteger(depth) || depth < 1 || depth > 3) return { ok: false, message: "Глубина должна быть 1..3" };
     const bot = this.primaryBot();
-    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    if (!bot || !bot.entity) return { ok: false, message: "Нет бота" };
     const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt"]);
-    if (!blockId) return { ok: false, message: "No blocks in hotbar" };
+    if (!blockId) return { ok: false, message: "Нет блоков в хотбаре" };
     let placed = 0;
     const origin = bot.entity.position.floored();
     for (let x = -radius; x <= radius; x++) {
@@ -892,16 +892,16 @@ export class BotManager {
         }
       }
     }
-    return { ok: true, message: `Filled ${radius} radius area (${placed} blocks)` };
+    return { ok: true, message: `Заполнена область радиусом ${radius} (${placed} блоков)` };
   }
 
   private async executeTowerCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
     const height = Number(args[0] ?? "10");
-    if (!Number.isInteger(height) || height < 1 || height > 30) return { ok: false, message: "Usage: tower <height 1..30>" };
+    if (!Number.isInteger(height) || height < 1 || height > 30) return { ok: false, message: "Использование: tower <высота 1..30>" };
     const bot = this.primaryBot();
-    if (!bot || !bot.entity) return { ok: false, message: "No bot" };
+    if (!bot || !bot.entity) return { ok: false, message: "Нет бота" };
     const blockId = this.getBestBlockInHotbar(bot, ["cobblestone", "stone", "dirt"]);
-    if (!blockId) return { ok: false, message: "No blocks in hotbar" };
+    if (!blockId) return { ok: false, message: "Нет блоков в хотбаре" };
     let built = 0;
     bot.setControlState("sneak", true);
     for (let i = 0; i < height; i++) {
@@ -921,57 +921,57 @@ export class BotManager {
       }
     }
     bot.setControlState("sneak", false);
-    return { ok: true, message: `Built tower ${built}/${height} blocks tall` };
+    return { ok: true, message: `Построена башня ${built}/${height} блоков` };
   }
 
   private async executeMineCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
     const bot = this.primaryBot();
-    if (!bot) return { ok: false, message: "No bot" };
+    if (!bot) return { ok: false, message: "Нет бота" };
     const mode = (args[0] ?? "block").toLowerCase();
 
     if (mode === "block" || mode === "look") {
       const block = (bot as any).blockAtCursor?.(5);
-      if (!block || block.name === "air") return { ok: false, message: "No block in reach" };
+      if (!block || block.name === "air") return { ok: false, message: "Нет блока в досягаемости" };
       await this.digBlocks(bot, [block], 1);
-      return { ok: true, message: `Mined ${block.name}` };
+      return { ok: true, message: `Добыт ${block.name}` };
     }
 
     if (mode === "nearby") {
       const blockName = args[1];
       const count = Math.min(10, Math.max(1, Number(args[2] ?? "5") || 5));
-      if (!blockName) return { ok: false, message: "Usage: bot mine nearby <block_name> [1..10]" };
+      if (!blockName) return { ok: false, message: "Использование: bot mine nearby <блок> [1..10]" };
       const blockId = (bot.registry as any)?.blocksByName?.[blockName]?.id;
-      if (typeof blockId !== "number") return { ok: false, message: `Unknown block: ${blockName}` };
+      if (typeof blockId !== "number") return { ok: false, message: `Неизвестный блок: ${blockName}` };
       const positions = (bot as any).findBlocks?.({ matching: blockId, maxDistance: 5, count }) ?? [];
       const blocks = positions.map((pos: any) => bot.blockAt(pos)).filter(Boolean);
       const mined = await this.digBlocks(bot, blocks, count);
-      return { ok: true, message: `Mined ${mined}/${count} nearby ${blockName}` };
+      return { ok: true, message: `Добыто ${mined}/${count} ${blockName} рядом` };
     }
 
-    return { ok: false, message: "Usage: bot mine block | bot mine nearby <block_name> [1..10]" };
+    return { ok: false, message: "Использование: bot mine block | bot mine nearby <блок> [1..10]" };
   }
 
   private async executePlaceCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
     const bot = this.primaryBot();
-    if (!bot) return { ok: false, message: "No bot" };
+    if (!bot) return { ok: false, message: "Нет бота" };
     const slot = Number(args[0]);
-    if (!Number.isInteger(slot) || slot < 0 || slot > 8) return { ok: false, message: "Usage: bot place <0..8>" };
+    if (!Number.isInteger(slot) || slot < 0 || slot > 8) return { ok: false, message: "Использование: bot place <0..8>" };
     const reference = (bot as any).blockAtCursor?.(5) ?? bot.blockAt(bot.entity.position.offset(0, -1, 0));
-    if (!reference || reference.name === "air") return { ok: false, message: "No placement reference block in reach" };
+    if (!reference || reference.name === "air") return { ok: false, message: "Нет блока для установки рядом" };
     bot.setQuickBarSlot(slot);
     try {
       await bot.placeBlock(reference, new Vec3(0, 1, 0));
-      return { ok: true, message: `Placed item from hotbar slot ${slot}` };
+      return { ok: true, message: `Установлен блок из слота ${slot}` };
     } catch (err) {
-      return { ok: false, message: `Could not place block: ${this.errorMessage(err)}` };
+      return { ok: false, message: `Не удалось установить: ${this.errorMessage(err)}` };
     }
   }
 
   private async executeClearCommand(args: string[]): Promise<{ ok: boolean; message: string }> {
     const bot = this.primaryBot();
-    if (!bot) return { ok: false, message: "No bot" };
+    if (!bot) return { ok: false, message: "Нет бота" };
     const mode = (args[0] ?? "soft").toLowerCase();
-    if (mode !== "soft") return { ok: false, message: "Usage: bot clear soft [radius 1..2]" };
+    if (mode !== "soft") return { ok: false, message: "Использование: bot clear soft [радиус 1..2]" };
     const radius = Math.min(2, Math.max(1, Number(args[1] ?? "1") || 1));
     const origin = bot.entity.position.floored();
     const blocks: any[] = [];
@@ -1002,7 +1002,7 @@ export class BotManager {
     }
 
     const cleared = await this.digBlocks(bot, blocks, 25);
-    return { ok: true, message: `Cleared ${cleared} soft block(s) within radius ${radius}` };
+    return { ok: true, message: `Очищено ${cleared} мягких блоков в радиусе ${radius}` };
   }
 
   private async digBlocks(bot: mineflayer.Bot, blocks: any[], limit: number): Promise<number> {
@@ -1237,7 +1237,7 @@ export class BotManager {
 
     bot.once("spawn", () => {
       runtime.hasSpawned = true;
-      this.appendLog("system", `${bot.username} spawned`);
+      this.appendLog("system", `${bot.username} заспавнен`);
       runtime.lastPos = null;
       runtime.lastMoveAt = Date.now();
       this.updateAggregateState();
@@ -1246,7 +1246,6 @@ export class BotManager {
     });
 
     bot.on("chat", (username, message) => {
-      this.appendLog("chat", `<${username}> ${message}`);
       const sender = this.extractSenderFromMessage(message) ?? username;
       this.tryRunChatCommand(sender, message, bot, true);
     });
@@ -1254,15 +1253,11 @@ export class BotManager {
     bot.on("message", (jsonMsg: any) => {
       const text = jsonMsg?.toString?.() ?? String(jsonMsg ?? "");
       const html = this.formatMcJsonToHtml(jsonMsg?.json ?? jsonMsg);
+      const lastLog = this.chatLog[this.chatLog.length - 1];
+      if (lastLog && lastLog.source === "chat" && lastLog.text === text) return;
       this.appendLog("chat", text, html);
       const sender = this.extractSenderFromMessage(text);
       this.tryRunChatCommand(sender, text, bot, false);
-    });
-
-    bot.on("messagestr", (message) => {
-      this.appendLog("chat", message);
-      const sender = this.extractSenderFromMessage(message);
-      this.tryRunChatCommand(sender, message, bot, false);
     });
 
     bot.on("health", () => {
@@ -1280,7 +1275,7 @@ export class BotManager {
           z: Number(pos.z.toFixed(1))
         });
       }
-      this.appendLog("system", `${bot.username} died`);
+      this.appendLog("system", `${bot.username} умер`);
       if (this.config.autoRespawn) {
         setTimeout(() => bot.chat("/spawn"), 500);
       }
@@ -1288,12 +1283,12 @@ export class BotManager {
 
     bot.on("windowOpen", () => {
       if (this.bots[0]?.bot === bot) this.updateGuiSnapshot(bot);
-      this.appendLog("system", `${bot.username} GUI opened`);
+      this.appendLog("system", `${bot.username} открыл инвентарь`);
     });
 
     bot.on("windowClose", () => {
       if (this.bots[0]?.bot === bot) this.guiSnapshot = null;
-      this.appendLog("system", `${bot.username} GUI closed`);
+      this.appendLog("system", `${bot.username} закрыл инвентарь`);
     });
 
     bot.on("end", (reason) => {
@@ -1302,11 +1297,11 @@ export class BotManager {
       const reasonText = typeof reason === "string" ? reason : "unknown";
       const normalizedError =
         reasonText === "socketClosed" && !runtime.hasSpawned
-          ? "Connection closed before login. Check host/port, auth mode, and Minecraft version."
+          ? "Соединение закрыто до входа. Проверьте хост/порт, авторизацию и версию."
           : reasonText;
       this.state = { ...this.state, error: normalizedError };
       if (this.bots.length === 0) this.guiSnapshot = null;
-      this.appendLog("system", `${bot.username} disconnected: ${normalizedError}`);
+      this.appendLog("system", `${bot.username} отключён: ${normalizedError}`);
       this.updateAggregateState();
     });
 
@@ -1330,7 +1325,7 @@ export class BotManager {
         kickedLoggedIn: Boolean(loggedIn),
         error: reasonText
       };
-      this.appendLog("error", `${bot.username} kicked: ${reasonText}`);
+      this.appendLog("error", `${bot.username} кикнут: ${reasonText}`);
     });
 
     if (this.config.parkour) this.startParkourLoop(runtime);
@@ -1580,7 +1575,7 @@ export class BotManager {
     if (!command) return;
     if (!this.isAdmin(effectiveSender)) {
       this.appendLog("system", `Команда отклонена (не админ): ${effectiveSender ?? "unknown"} -> ${command}`);
-      if (reply && effectiveSender) bot.chat(`[err] ${effectiveSender} is not admin`);
+      if (reply && effectiveSender) bot.chat(`[err] ${effectiveSender}, доступ запрещён`);
       return;
     }
     const key = `${effectiveSender}|${command}`;
@@ -1590,7 +1585,7 @@ export class BotManager {
     this.lastChatCommandAt = now;
     void this.executeCommand(command).then((result) => {
       this.appendLog("system", `Чат-команда: ${effectiveSender ?? "unknown"} -> ${command} (${result.ok ? "ok" : "err"})`);
-      if (reply) bot.chat(result.ok ? `[ok] ${result.message}` : `[err] ${result.message}`);
+      if (reply) bot.chat(result.ok ? `[ok] >> ${result.message}` : `[err] !! ${result.message}`);
     });
   }
 
@@ -1622,12 +1617,12 @@ export class BotManager {
 
   async savePreset(name: string): Promise<{ ok: boolean; message: string }> {
     const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_");
-    if (!sanitized) return { ok: false, message: "Invalid preset name" };
+    if (!sanitized) return { ok: false, message: "Неверное имя сборки" };
     try {
       await Bun.write(`${this.presetsDir}/${sanitized}.json`, JSON.stringify(this.config, null, 2));
-      return { ok: true, message: `Preset '${sanitized}' saved` };
+      return { ok: true, message: `Сборка '${sanitized}' сохранена` };
     } catch (err) {
-      return { ok: false, message: `Failed to save preset: ${this.errorMessage(err)}` };
+      return { ok: false, message: `Ошибка сохранения: ${this.errorMessage(err)}` };
     }
   }
 
@@ -1635,12 +1630,12 @@ export class BotManager {
     const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_");
     try {
       const file = await Bun.file(`${this.presetsDir}/${sanitized}.json`);
-      if (!(file as any).exists()) return { ok: false, message: `Preset '${sanitized}' not found` };
+      if (!(file as any).exists()) return { ok: false, message: `Сборка '${sanitized}' не найдена` };
       const preset = JSON.parse(await file.text()) as BotConfig;
       this.config = { ...DEFAULT_CONFIG, ...preset };
-      return { ok: true, message: `Preset '${sanitized}' loaded` };
+      return { ok: true, message: `Сборка '${sanitized}' загружена` };
     } catch (err) {
-      return { ok: false, message: `Failed to load preset: ${this.errorMessage(err)}` };
+      return { ok: false, message: `Ошибка загрузки: ${this.errorMessage(err)}` };
     }
   }
 
@@ -1648,11 +1643,11 @@ export class BotManager {
     const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_");
     try {
       const file = await Bun.file(`${this.presetsDir}/${sanitized}.json`);
-      if (!(file as any).exists()) return { ok: false, message: `Preset '${sanitized}' not found` };
+      if (!(file as any).exists()) return { ok: false, message: `Сборка '${sanitized}' не найдена` };
       await Bun.write(`${this.presetsDir}/${sanitized}.json`, "");
-      return { ok: true, message: `Preset '${sanitized}' deleted` };
+      return { ok: true, message: `Сборка '${sanitized}' удалена` };
     } catch (err) {
-      return { ok: false, message: `Failed to delete preset: ${this.errorMessage(err)}` };
+      return { ok: false, message: `Ошибка удаления: ${this.errorMessage(err)}` };
     }
   }
 
@@ -1673,21 +1668,21 @@ export class BotManager {
     const action = (args[0] ?? "list").toLowerCase();
     if (action === "save") {
       const name = args[1];
-      if (!name) return { ok: false, message: "Usage: preset save <name>" };
+      if (!name) return { ok: false, message: "Использование: preset save <название>" };
       return this.savePreset(name);
     }
     if (action === "load") {
       const name = args[1];
-      if (!name) return { ok: false, message: "Usage: preset load <name>" };
+      if (!name) return { ok: false, message: "Использование: preset load <название>" };
       return this.loadPreset(name);
     }
     if (action === "delete") {
       const name = args[1];
-      if (!name) return { ok: false, message: "Usage: preset delete <name>" };
+      if (!name) return { ok: false, message: "Использование: preset delete <название>" };
       return this.deletePreset(name);
     }
     const presets = await this.listPresets();
-    if (presets.length === 0) return { ok: true, message: "No presets saved" };
-    return { ok: true, message: `Presets: ${presets.join(", ")}` };
+    if (presets.length === 0) return { ok: true, message: "Нет сохранённых сборок" };
+    return { ok: true, message: `Сборки: ${presets.join(", ")}` };
   }
 }
